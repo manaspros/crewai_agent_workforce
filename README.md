@@ -1,54 +1,65 @@
 # Workers Crew
 
-Welcome to the Workers Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+_Ever thought how a company would work if people were replaced by agents?_
 
-## Installation
+This project implements a multi-agent AI workflow using [crewAI](https://crewai.com), designed for collaborative software engineering tasks. The crew consists of specialized agents (Product Manager, Frontend/Backend Engineers, QA, Security Auditor) that coordinate to deliver a full-stack product, following a clear division of labor and review process.
 
-Ensure you have Python >=3.10 <3.14 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+## Project Structure
 
-First, if you haven't already, install uv:
+- **src/workers/config/agents.yaml**: Defines agent roles, goals, and backstories (e.g., Senior/Regular Frontend and Backend Engineers, QA, Security Auditor).
+- **src/workers/config/tasks.yaml**: Specifies tasks, expected outputs, and agent assignments for each stage (product definition, planning, implementation, testing, security review).
+- **src/workers/crew.py**: Orchestrates agent and task instantiation, and defines the sequential workflow.
+- **src/workers/main.py**: Entrypoint for running, training, replaying, or testing the crew.
+- **src/workers/code/**: Output folder for generated code, specs, test plans, and reports.
+
+## Workflow Overview
+
+1. **Product Manager** defines requirements and scope.
+2. **Senior Frontend/Backend Engineers** plan and delegate implementation subtasks to their respective teams.
+3. **Frontend/Backend Engineers** implement assigned features, contributing to a single HTML (frontend) or Python (backend) deliverable.
+4. **QA Engineer** creates comprehensive test plans and cases.
+5. **Security Auditor** reviews all code for vulnerabilities and best practices.
+
+All code outputs are plain files (no markdown/code fences), and are organized in the `code` folder.
+
+## Running the Crew
+
+Install dependencies (Python 3.10–3.13 required):
 
 ```bash
 pip install uv
+uv pip install -r requirements.txt
 ```
 
-Next, navigate to your project directory and install the dependencies:
-
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
-```
-### Customizing
-
-**Add your `OPENAI_API_KEY` into the `.env` file**
-
-- Modify `src/workers/config/agents.yaml` to define your agents
-- Modify `src/workers/config/tasks.yaml` to define your tasks
-- Modify `src/workers/crew.py` to add your own logic, tools and specific args
-- Modify `src/workers/main.py` to add custom inputs for your agents and tasks
-
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
+To run the crew:
 
 ```bash
-$ crewai run
+python -m workers.main
 ```
 
-This command initializes the workers Crew, assembling the agents and assigning them tasks as defined in your configuration.
+Or use the provided scripts:
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+- `workers.main:run` — Run the full workflow
+- `workers.main:train` — Train the crew (see main.py for usage)
+- `workers.main:replay` — Replay from a specific task
+- `workers.main:test` — Run tests
 
-## Understanding Your Crew
+## Customization
 
-The workers Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+- Edit `config/agents.yaml` and `config/tasks.yaml` to adjust agent roles or workflow.
+- Place your API keys and secrets in a `.env` file (not tracked by git).
+- Extend or modify the crew logic in `crew.py` as needed.
+
+## Output
+
+- Product specs, code, test plans, and security reports are saved in the `code` directory.
 
 ## Support
 
-For support, questions, or feedback regarding the Workers Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
+- [crewAI Documentation](https://docs.crewai.com)
+- [GitHub](https://github.com/joaomdmoura/crewai)
+- [Discord](https://discord.com/invite/X4JWnZnxPb)
 
-Let's create wonders together with the power and simplicity of crewAI.
+---
+
+This project demonstrates a modular, agent-driven approach to collaborative software engineering using crewAI.
