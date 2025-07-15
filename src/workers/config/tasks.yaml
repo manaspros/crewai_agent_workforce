@@ -1,0 +1,43 @@
+product_definition_task:
+  description: >
+    Define the product requirements and scope based on the hardcoded topic: "E-commerce Website for Handmade Crafts".
+    This includes outlining key features, user stories, and technical specifications for both frontend and backend.
+  expected_output: >
+    A detailed product specification document, including frontend and backend requirements.
+  agent: product_manager
+
+frontend_development_task:
+  description: >
+    Collaboratively develop the frontend of the "E-commerce Website for Handmade Crafts".
+    Focus on creating a responsive and intuitive user interface.
+    All code should be stored in a 'code' folder.
+  expected_output: >
+    All frontend code files for the e-commerce website, organized within a 'code' folder.
+  
+
+backend_development_task:
+  description: >
+    Develop the backend of the "E-commerce Website for Handmade Crafts".
+    This includes setting up the API, database models, and business logic.
+    All code should be stored in a 'code' folder.
+  expected_output: >
+    All backend code files for the e-commerce website, organized within a 'code' folder.
+  
+
+testing_task:
+  description: >
+    Create comprehensive test plans and test cases for the "E-commerce Website for Handmade Crafts".
+    This includes unit, integration, and end-to-end tests for both frontend and backend components.
+  expected_output: >
+    A detailed test plan document with individual test cases.
+  agent: test_maker
+
+security_review_task:
+  description: >
+    Review all generated code for security vulnerabilities and adherence to best practices.
+    Ensure that no markdown is included in the output and all code is strictly within a 'code' folder.
+    Provide a security assessment report.
+  expected_output: >
+    A security assessment report detailing any vulnerabilities found and recommendations for remediation.
+    The report should explicitly state that no markdown was used and all code was found in the 'code' folder.
+  agent: code_security_reviewer
