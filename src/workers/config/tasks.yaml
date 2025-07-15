@@ -13,7 +13,7 @@ frontend_development_task:
     All code should be stored in a 'code' folder.
   expected_output: >
     All frontend code files for the e-commerce website, organized within a 'code' folder.
-  
+  agent: frontend_engineer_1
 
 backend_development_task:
   description: >
@@ -22,7 +22,7 @@ backend_development_task:
     All code should be stored in a 'code' folder.
   expected_output: >
     All backend code files for the e-commerce website, organized within a 'code' folder.
-  
+  agent: backend_engineer_1
 
 testing_task:
   description: >

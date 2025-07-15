@@ -24,12 +24,12 @@ class Workers():
             verbose=True
         )
 
-    @agent
-    def frontend_engineer_2(self) -> Agent:
-        return Agent(
-            config=self.agents_config['frontend_engineer_2'], # type: ignore[index]
-            verbose=True
-        )
+    # @agent
+    # def frontend_engineer_2(self) -> Agent:
+    #     return Agent(
+    #         config=self.agents_config['frontend_engineer_2'], # type: ignore[index]
+    #         verbose=True
+    #     )
 
     @agent
     def backend_engineer_1(self) -> Agent:
@@ -38,19 +38,19 @@ class Workers():
             verbose=True
         )
 
-    @agent
-    def backend_engineer_2(self) -> Agent:
-        return Agent(
-            config=self.agents_config['backend_engineer_2'], # type: ignore[index]
-            verbose=True
-        )
+    # @agent
+    # def backend_engineer_2(self) -> Agent:
+    #     return Agent(
+    #         config=self.agents_config['backend_engineer_2'], # type: ignore[index]
+    #         verbose=True
+    #     )
 
-    @agent
-    def backend_engineer_3(self) -> Agent:
-        return Agent(
-            config=self.agents_config['backend_engineer_3'], # type: ignore[index]
-            verbose=True
-        )
+    # @agent
+    # def backend_engineer_3(self) -> Agent:
+    #     return Agent(
+    #         config=self.agents_config['backend_engineer_3'], # type: ignore[index]
+    #         verbose=True
+    #     )
 
     @agent
     def test_maker(self) -> Agent:
@@ -81,7 +81,7 @@ class Workers():
             description=self.tasks_config['frontend_development_task']['description'],
             expected_output=self.tasks_config['frontend_development_task']['expected_output'],
             agent=self.frontend_engineer_1(),
-            output_file='code/frontend_code.txt'
+            output_file='code/frontend_code.html'
         )
 
     @task
@@ -90,7 +90,7 @@ class Workers():
             description=self.tasks_config['backend_development_task']['description'],
             expected_output=self.tasks_config['backend_development_task']['expected_output'],
             agent=self.backend_engineer_1(),
-            output_file='code/backend_code.txt'
+            output_file='code/backend_code.py'
         )
 
     @task
