@@ -6,23 +6,40 @@ product_definition_task:
     A detailed product specification document, including frontend and backend requirements.
   agent: product_manager
 
-frontend_development_task:
+frontend_development_task_1:
   description: >
-    Collaboratively develop the frontend of the "E-commerce Website for Handmade Crafts".
-    Focus on creating a responsive and intuitive user interface.
-    All code should be stored in a 'code' folder.
+    Develop the main user interface and homepage for the "E-commerce Website for Handmade Crafts". Focus on layout, navigation, and overall structure. All code should be stored in a 'code' folder.
   expected_output: >
-    All frontend code files for the e-commerce website, organized within a 'code' folder.
+    The main HTML file for the homepage and navigation, placed in the 'code' folder.
   agent: frontend_engineer_1
 
-backend_development_task:
+frontend_development_task_2:
   description: >
-    Develop the backend of the "E-commerce Website for Handmade Crafts".
-    This includes setting up the API, database models, and business logic.
-    All code should be stored in a 'code' folder.
+    Implement the product listing, product detail, and cart UI for the "E-commerce Website for Handmade Crafts". Collaborate with the senior frontend engineer to ensure consistency. All code should be stored in a 'code' folder.
   expected_output: >
-    All backend code files for the e-commerce website, organized within a 'code' folder.
+    The HTML file for product listing, detail, and cart pages, placed in the 'code' folder.
+  agent: frontend_engineer_2
+
+backend_development_task_1:
+  description: >
+    Design and implement the core API endpoints and user authentication for the backend of the "E-commerce Website for Handmade Crafts". All code should be stored in a 'code' folder.
+  expected_output: >
+    Python file with API endpoints and authentication logic, placed in the 'code' folder.
   agent: backend_engineer_1
+
+backend_development_task_2:
+  description: >
+    Implement product management, cart, and order processing logic for the backend of the "E-commerce Website for Handmade Crafts". All code should be stored in a 'code' folder.
+  expected_output: >
+    Python file with product, cart, and order logic, placed in the 'code' folder.
+  agent: backend_engineer_2
+
+backend_development_task_3:
+  description: >
+    Assist in developing database models, admin features, and infrastructure improvements for the backend of the "E-commerce Website for Handmade Crafts". All code should be stored in a 'code' folder.
+  expected_output: >
+    Python file with database models, admin endpoints, and infrastructure code, placed in the 'code' folder.
+  agent: backend_engineer_3
 
 testing_task:
   description: >
@@ -41,3 +58,45 @@ security_review_task:
     A security assessment report detailing any vulnerabilities found and recommendations for remediation.
     The report should explicitly state that no markdown was used and all code was found in the 'code' folder.
   agent: code_security_reviewer
+
+frontend_planning_task:
+  description: >
+    Analyze the frontend requirements for the "E-commerce Website for Handmade Crafts", divide the work into clear subtasks, and assign each subtask to a frontend engineer. Clearly specify what each frontend engineer should implement. Do not include markdown or code fences (e.g., ```) in the output.
+  expected_output: >
+    A list of frontend subtasks, each assigned to a specific frontend engineer, with clear instructions for implementation. No markdown or code fences.
+  agent: frontend_engineer_1
+
+frontend_implementation_task_2:
+  description: >
+    Implement the assigned frontend features as specified by the Senior Frontend Engineer. Do not include markdown or code fences (e.g., ```) in the output.
+  expected_output: >
+    HTML/CSS/JS code for the assigned frontend features, ready to be merged into the main HTML file. No markdown or code fences.
+  agent: frontend_engineer_2
+
+frontend_implementation_task_3:
+  description: >
+    Implement the assigned frontend features as specified by the Senior Frontend Engineer. Do not include markdown or code fences (e.g., ```) in the output.
+  expected_output: >
+    HTML/CSS/JS code for the assigned frontend features, ready to be merged into the main HTML file. No markdown or code fences.
+  agent: frontend_engineer_3
+
+backend_planning_task:
+  description: >
+    Analyze the backend requirements for the "E-commerce Website for Handmade Crafts", divide the work into clear subtasks, and assign each subtask to a backend engineer. Clearly specify what each backend engineer should implement. Do not include markdown or code fences (e.g., ```) in the output.
+  expected_output: >
+    A list of backend subtasks, each assigned to a specific backend engineer, with clear instructions for implementation. No markdown or code fences.
+  agent: backend_engineer_1
+
+backend_implementation_task_2:
+  description: >
+    Implement the assigned backend features as specified by the Senior Backend Engineer. Do not include markdown or code fences (e.g., ```) in the output.
+  expected_output: >
+    Python code for the assigned backend features, ready to be merged into the main Python file. No markdown or code fences.
+  agent: backend_engineer_2
+
+backend_implementation_task_3:
+  description: >
+    Implement the assigned backend features as specified by the Senior Backend Engineer. Do not include markdown or code fences (e.g., ```) in the output.
+  expected_output: >
+    Python code for the assigned backend features, ready to be merged into the main Python file. No markdown or code fences.
+  agent: backend_engineer_3

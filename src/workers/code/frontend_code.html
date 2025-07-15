@@ -1,698 +1,864 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Handmade Crafts Marketplace</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Engineer 3 - Seller & Admin Features, Components</title>
     <style>
-      body {
-        font-family: sans-serif;
-        margin: 0;
-        padding: 0;
-        background-color: #f8f8f8;
-        color: #333;
-      }
-      header {
-        background-color: #a0522d;
-        color: white;
-        padding: 10px 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-      header h1 {
-        margin: 0;
-        font-size: 1.5em;
-      }
-      header nav a {
-        color: white;
-        margin: 0 10px;
-        text-decoration: none;
-      }
-      header nav a:hover {
-        text-decoration: underline;
-      }
-      .search-bar {
-        display: flex;
-        align-items: center;
-        margin: 10px 0;
-      }
-      .search-bar input {
-        padding: 5px;
-        border: none;
-        border-radius: 3px 0 0 3px;
-      }
-      .search-bar button {
-        padding: 5px 10px;
-        background-color: #d2b48c;
-        border: none;
-        border-radius: 0 3px 3px 0;
-        cursor: pointer;
-        color: #333;
-      }
-      .search-bar button:hover {
-        background-color: #c0a078;
-      }
-      .cart-icon {
-        position: relative;
-        cursor: pointer;
-      }
-      .cart-count {
-        position: absolute;
-        top: -8px;
-        right: -8px;
-        background-color: red;
-        color: white;
-        border-radius: 50%;
-        padding: 2px 5px;
-        font-size: 0.8em;
-      }
-
-      main {
-        padding: 20px;
-      }
-      .view {
-        display: none;
-      }
-      .view.active {
-        display: block;
-      }
-
-      /* Homepage Styles */
-      .homepage .hero {
-        background-color: #d2b48c;
-        padding: 40px 20px;
-        text-align: center;
-        margin-bottom: 20px;
-      }
-      .homepage .hero h2 {
-        margin-top: 0;
-        color: #333;
-      }
-      .homepage .featured-products h3 {
-        margin-top: 0;
-        border-bottom: 1px solid #ccc;
-        padding-bottom: 10px;
-      }
-      .product-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 20px;
-      }
-      .product-item {
-        background-color: white;
-        border: 1px solid #ccc;
-        padding: 10px;
-        text-align: center;
-        cursor: pointer;
-      }
-      .product-item img {
-        max-width: 100%;
-        height: 120px;
-        object-fit: cover;
-        margin-bottom: 10px;
-      }
-      .product-item h4 {
-        margin: 0 0 5px 0;
-        font-size: 1em;
-      }
-      .product-item p {
-        margin: 0;
-        font-weight: bold;
-        color: #a0522d;
-      }
-
-      /* Product Detail Styles */
-      .product-detail {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-      }
-      .product-detail .product-images {
-        flex: 1 1 300px;
-      }
-      .product-detail .product-images img {
-        max-width: 100%;
-        height: auto;
-        border: 1px solid #ccc;
-      }
-      .product-detail .product-info {
-        flex: 2 1 400px;
-      }
-      .product-detail h2 {
-        margin-top: 0;
-      }
-      .product-detail .price {
-        font-size: 1.5em;
-        color: #a0522d;
-        margin-bottom: 10px;
-      }
-      .product-detail .add-to-cart-btn {
-        background-color: #d2b48c;
-        color: #333;
-        border: none;
-        padding: 10px 20px;
-        cursor: pointer;
-        font-size: 1em;
-        border-radius: 3px;
-        margin-top: 15px;
-      }
-      .product-detail .add-to-cart-btn:hover {
-        background-color: #c0a078;
-      }
-      .product-detail .reviews h4 {
-        margin-top: 20px;
-        border-top: 1px solid #eee;
-        padding-top: 10px;
-      }
-
-      /* Cart Styles */
-      .cart h2 {
-        margin-top: 0;
-        border-bottom: 1px solid #ccc;
-        padding-bottom: 10px;
-      }
-      .cart-items .cart-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border-bottom: 1px solid #eee;
-        padding: 10px 0;
-      }
-      .cart-item .item-info {
-        display: flex;
-        align-items: center;
-      }
-      .cart-item img {
-        width: 50px;
-        height: 50px;
-        object-fit: cover;
-        margin-right: 10px;
-      }
-      .cart-item .item-details h4 {
-        margin: 0 0 5px 0;
-        font-size: 1em;
-      }
-      .cart-item .item-details p {
-        margin: 0;
-        color: #a0522d;
-      }
-      .cart-item .item-quantity input {
-        width: 40px;
-        text-align: center;
-        margin: 0 5px;
-      }
-      .cart-item .remove-item-btn {
-        background-color: #e74c3c;
-        color: white;
-        border: none;
-        padding: 5px 10px;
-        cursor: pointer;
-        border-radius: 3px;
-        font-size: 0.8em;
-      }
-      .cart-summary {
-        text-align: right;
-        margin-top: 20px;
-      }
-      .cart-summary .subtotal {
-        font-size: 1.2em;
-        font-weight: bold;
-        margin-bottom: 10px;
-      }
-      .cart-summary .checkout-btn {
-        background-color: #a0522d;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        cursor: pointer;
-        font-size: 1.1em;
-        border-radius: 3px;
-      }
-      .cart-summary .checkout-btn:hover {
-        background-color: #8b4513;
-      }
-
-      /* Placeholder Styles */
-      .placeholder {
-        padding: 20px;
-        text-align: center;
-        color: #666;
-      }
-      .form-group {
-        margin-bottom: 15px;
-        text-align: left;
-      }
-      .form-group label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: bold;
-      }
-      .form-group input,
-      .form-group textarea {
-        width: 100%;
-        padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
-        box-sizing: border-box;
-      }
-      .btn-primary {
-        background-color: #a0522d;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        cursor: pointer;
-        border-radius: 3px;
-        font-size: 1em;
-      }
-      .btn-primary:hover {
-        background-color: #8b4513;
-      }
-
-      footer {
-        background-color: #333;
-        color: white;
-        text-align: center;
-        padding: 20px;
-        margin-top: 30px;
-      }
-      footer nav a {
-        color: white;
-        margin: 0 10px;
-        text-decoration: none;
-      }
-      footer nav a:hover {
-        text-decoration: underline;
-      }
-
-      /* Responsive Styles */
-      @media (max-width: 768px) {
-        header {
-          flex-direction: column;
-          align-items: flex-start;
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
         }
-        header nav {
-          margin-top: 10px;
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
         }
-        header nav a {
-          display: block;
-          margin: 5px 0;
+        h1, h2, h3 {
+            color: #0056b3;
         }
-        .search-bar {
-          width: 100%;
-          margin: 10px 0;
+        section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
         }
-        .search-bar input {
-          flex-grow: 1;
+        .hidden {
+            display: none;
         }
-        .product-grid {
-          grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        .form-group {
+            margin-bottom: 15px;
         }
-        .product-detail {
-          flex-direction: column;
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
         }
-      }
+        input[type="text"],
+        input[type="number"],
+        input[type="file"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1em;
+        }
+         textarea {
+             resize: vertical;
+         }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.2s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        nav button {
+            margin-right: 10px;
+            margin-bottom: 10px;
+            background-color: #6c757d;
+        }
+         nav button:hover {
+             background-color: #545b62;
+         }
+         nav button.active {
+             background-color: #007bff;
+         }
+
+
+        .product-list, .order-list, .admin-list {
+            margin-top: 15px;
+        }
+        .product-item, .order-item, .admin-item {
+            border: 1px solid #eee;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            background-color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px; /* Space between items */
+        }
+        .product-item > div, .order-item > div, .admin-item > div {
+             flex-grow: 1; /* Allows items to take available space */
+             min-width: 100px; /* Minimum width before wrapping */
+        }
+        .product-item .actions, .order-item .actions {
+            flex-shrink: 0; /* Prevent buttons from shrinking */
+            display: flex;
+            gap: 5px; /* Space between buttons */
+        }
+
+        .product-item button, .order-item button {
+            padding: 5px 10px;
+            font-size: 0.9em;
+        }
+        .product-item button.edit {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        .product-item button.edit:hover {
+            background-color: #e0a800;
+        }
+         .product-item button.delete {
+            background-color: #dc3545;
+         }
+         .product-item button.delete:hover {
+            background-color: #c82333;
+         }
+         .order-item button.update-status {
+            background-color: #28a745;
+         }
+         .order-item button.update-status:hover {
+            background-color: #218838;
+         }
+         .order-item button.view-details {
+             background-color: #17a2b8;
+         }
+         .order-item button.view-details:hover {
+             background-color: #138496;
+         }
+
+        /* Reusable Components Demo */
+        .component-demo {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px dashed #a0a0a0;
+            background-color: #fff;
+            border-radius: 5px;
+        }
+        .component-demo h4 {
+            margin-top: 0;
+            color: #333;
+        }
+        .component-demo .button-group button {
+            margin-right: 10px;
+        }
+        .component-demo .input-group .form-group {
+             margin-bottom: 10px;
+             padding-right: 10px; /* Adjust for visual alignment in demo */
+             width: calc(50% - 10px); /* Example layout */
+             display: inline-block; /* Example layout */
+             vertical-align: top;
+        }
+        @media (max-width: 600px) {
+             .component-demo .input-group .form-group {
+                 width: 100%;
+                 padding-right: 0;
+             }
+        }
+
+
+        .product-card-demo {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            width: 200px;
+            text-align: center;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin: 10px; /* Example margin for grid layout */
+            display: inline-block; /* Example layout */
+            vertical-align: top;
+        }
+        .product-card-demo img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+         .product-card-demo h5 {
+             margin: 5px 0;
+             font-size: 1.1em;
+             color: #0056b3;
+         }
+         .product-card-demo p {
+             margin: 5px 0;
+             font-size: 1em;
+             color: #555;
+             font-weight: bold;
+         }
+         .product-card-demo button {
+             margin-top: 10px;
+             width: 100%;
+             box-sizing: border-box;
+         }
+
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                padding: 15px;
+            }
+             nav button {
+                 width: 100%;
+                 margin-right: 0;
+             }
+             .product-item, .order-item, .admin-item {
+                flex-direction: column;
+                align-items: flex-start;
+             }
+             .product-item > div, .order-item > div, .admin-item > div {
+                 width: 100%; /* Stack items on small screens */
+                 min-width: auto;
+                 margin-bottom: 5px;
+             }
+             .product-item .actions, .order-item .actions {
+                 width: 100%;
+                 flex-direction: column; /* Stack buttons */
+                 gap: 5px;
+             }
+             .product-item button, .order-item button {
+                 width: 100%;
+             }
+             .component-demo .button-group button {
+                 margin-right: 0;
+                 margin-bottom: 10px;
+                 width: 100%;
+             }
+             .product-card-demo {
+                width: 100%;
+                margin: 10px 0;
+             }
+        }
     </style>
-  </head>
-  <body>
-    <header>
-      <h1>Handmade Haven</h1>
-      <nav>
-        <a href="#" data-view="homepage">Home</a>
-        <a href="#" data-view="product-list">Shop</a>
-        <a href="#" data-view="login">Login</a>
-        <a href="#" data-view="register">Register</a>
-      </nav>
-      <div class="search-bar">
-        <input type="text" placeholder="Search for crafts..." />
-        <button>Search</button>
-      </div>
-      <div class="cart-icon" data-view="cart">
-        🛒 <span class="cart-count">0</span>
-      </div>
-    </header>
+</head>
+<body>
+    <div class="container">
+        <h1>Frontend Engineer 3 Assignments</h1>
 
-    <main>
-      <div id="homepage" class="view active">
-        <section class="hero">
-          <h2>Discover Unique Handmade Treasures</h2>
-          <p>
-            Support independent artisans and find perfect handcrafted items.
-          </p>
+        <nav>
+            <button data-section="sellerProfile" class="active">Seller Profile</button>
+            <button data-section="productManagement">Product Management</button>
+            <button data-section="orderManagement">Seller Orders</button>
+            <button data-section="reusableComponents">Components Demo</button>
+            <button data-section="adminViews">Admin Views (Basic)</button>
+        </nav>
+
+        <!-- Seller Account Setup / Profile -->
+        <section id="sellerProfile">
+            <h2>Seller Account / Profile</h2>
+            <p>Manage your shop information here.</p>
+            <form id="sellerProfileForm">
+                <div class="form-group">
+                    <label for="shopName">Shop Name:</label>
+                    <input type="text" id="shopName" name="shopName" required value="My Handmade Shop">
+                </div>
+                <div class="form-group">
+                    <label for="sellerBio">Bio:</label>
+                    <textarea id="sellerBio" name="sellerBio" rows="4">Welcome to my shop! I create unique handmade crafts with love.</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="profileImage">Profile Image:</label>
+                    <input type="file" id="profileImage" name="profileImage">
+                     <!-- In a real app, display current image -->
+                </div>
+                <button type="submit">Save Profile</button>
+            </form>
         </section>
-        <section class="featured-products">
-          <h3>Featured Products</h3>
-          <div class="product-grid"></div>
-        </section>
-      </div>
 
-      <div id="product-list" class="view">
-        <h2>All Products</h2>
-        <div class="product-grid"></div>
-      </div>
+        <!-- Product Listing Management (Seller Dashboard) -->
+        <section id="productManagement" class="hidden">
+            <h2>Product Management</h2>
+             <p>Add, edit, or delete your products.</p>
 
-      <div id="product-detail" class="view">
-        <div class="product-detail">
-          <div class="product-images">
-            <img src="placeholder-detail.jpg" alt="Product Image" />
-          </div>
-          <div class="product-info">
-            <h2 id="detail-title">Product Title</h2>
-            <p class="price" id="detail-price">$0.00</p>
-            <p id="detail-description">Detailed description of the product.</p>
-            <button class="add-to-cart-btn" id="add-to-cart-btn">
-              Add to Cart
-            </button>
-            <div class="reviews">
-              <h4>Customer Reviews</h4>
-              <p>No reviews yet.</p>
+            <h3>Add New Product</h3>
+            <form id="addProductForm">
+                <div class="form-group">
+                    <label for="productTitle">Title:</label>
+                    <input type="text" id="productTitle" name="productTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="productDescription">Description:</label>
+                    <textarea id="productDescription" name="productDescription" rows="4" required></textarea>
+                </div>
+                 <div class="form-group">
+                    <label for="productPrice">Price ($):</label>
+                    <input type="number" id="productPrice" name="productPrice" step="0.01" required min="0">
+                </div>
+                 <div class="form-group">
+                    <label for="productQuantity">Quantity:</label>
+                    <input type="number" id="productQuantity" name="productQuantity" required min="0" value="1">
+                </div>
+                 <div class="form-group">
+                    <label for="productCategory">Category:</label>
+                    <select id="productCategory" name="productCategory" required>
+                        <option value="">--Select Category--</option>
+                        <option value="pottery">Pottery</option>
+                        <option value="jewelry">Jewelry</option>
+                        <option value="textiles">Textiles</option>
+                        <option value="art">Art</option>
+                        <option value="woodworking">Woodworking</option>
+                        <option value="other">Other</option>
+                         <!-- Options would ideally be fetched from backend -->
+                    </select>
+                </div>
+                 <div class="form-group">
+                    <label for="productTags">Tags (comma-separated):</label>
+                    <input type="text" id="productTags" name="productTags" placeholder="e.g. unique, gift, ceramic">
+                </div>
+                <div class="form-group">
+                    <label for="productImages">Product Images (Select one or more files):</label>
+                    <input type="file" id="productImages" name="productImages" multiple accept="image/*" required>
+                </div>
+                <button type="submit">Add Product</button>
+            </form>
+
+            <hr style="margin: 30px 0;">
+
+            <h3>Your Products</h3>
+            <div id="sellerProductList" class="product-list">
+                <!-- Placeholder product items -->
+                <div class="product-item" data-id="prod1">
+                    <div><strong>Ceramic Mug - Blue Glaze</strong></div>
+                    <div>Price: $25.00</div>
+                    <div>Stock: 15</div>
+                    <div>Category: Pottery</div>
+                     <div class="actions">
+                        <button class="edit" onclick="editProduct('prod1')">Edit</button>
+                        <button class="delete" onclick="deleteProduct('prod1', this)">Delete</button>
+                    </div>
+                </div>
+                 <div class="product-item" data-id="prod2">
+                    <div><strong>Hand-knitted Wool Scarf</strong></div>
+                    <div>Price: $35.00</div>
+                    <div>Stock: 8</div>
+                     <div>Category: Textiles</div>
+                      <div class="actions">
+                        <button class="edit" onclick="editProduct('prod2')">Edit</button>
+                        <button class="delete" onclick="deleteProduct('prod2', this)">Delete</button>
+                    </div>
+                </div>
+                 <div class="product-item" data-id="prod3">
+                    <div><strong>Silver Leaf Pendant</strong></div>
+                    <div>Price: $45.00</div>
+                    <div>Stock: 12</div>
+                     <div>Category: Jewelry</div>
+                      <div class="actions">
+                        <button class="edit" onclick="editProduct('prod3')">Edit</button>
+                        <button class="delete" onclick="deleteProduct('prod3', this)">Delete</button>
+                    </div>
+                </div>
+                 <!-- More items would be loaded from backend -->
+                 <p id="noSellerProducts" style="display: none;">You have no products listed yet.</p>
             </div>
-          </div>
-        </div>
-      </div>
+        </section>
 
-      <div id="cart" class="view">
-        <h2>Your Shopping Cart</h2>
-        <div class="cart-items"></div>
-        <div class="cart-summary">
-          <p class="subtotal">
-            Subtotal: $<span id="cart-subtotal">0.00</span>
-          </p>
-          <button class="checkout-btn" data-view="checkout">
-            Proceed to Checkout
-          </button>
-        </div>
-      </div>
+        <!-- Seller Order Management (Seller Dashboard) -->
+        <section id="orderManagement" class="hidden">
+            <h2>Seller Order Management</h2>
+             <p>View and manage orders for your products.</p>
+            <h3>Orders for Your Products</h3>
+            <div id="sellerOrderList" class="order-list">
+                 <!-- Placeholder order items -->
+                <div class="order-item" data-id="order1">
+                    <div><strong>Order #1001</strong></div>
+                    <div>Customer: Jane Doe</div>
+                    <div>Date: 2023-10-26</div>
+                    <div>Status: <span id="status-order1">Processing</span></div>
+                    <div>Items: 1 x Ceramic Mug</div>
+                    <div class="actions">
+                        <button class="update-status" onclick="updateOrderStatus('order1', 'Shipped', this)">Mark as Shipped</button>
+                         <button class="view-details" onclick="viewOrderDetail('order1')">View Details</button>
+                    </div>
+                </div>
+                 <div class="order-item" data-id="order2">
+                    <div><strong>Order #1002</strong></div>
+                    <div>Customer: John Smith</div>
+                    <div>Date: 2023-10-25</div>
+                    <div>Status: <span id="status-order2">Shipped</span></div>
+                     <div>Items: 1 x Knitted Scarf, 1 x Ceramic Mug</div>
+                    <div class="actions">
+                        <button class="view-details" onclick="viewOrderDetail('order2')">View Details</button>
+                    </div>
+                </div>
+                <div class="order-item" data-id="order3">
+                    <div><strong>Order #1003</strong></div>
+                    <div>Customer: Alice Johnson</div>
+                    <div>Date: 2023-10-26</div>
+                    <div>Status: <span id="status-order3">Processing</span></div>
+                    <div>Items: 2 x Silver Leaf Pendant</div>
+                    <div class="actions">
+                         <button class="update-status" onclick="updateOrderStatus('order3', 'Shipped', this)">Mark as Shipped</button>
+                         <button class="view-details" onclick="viewOrderDetail('order3')">View Details</button>
+                     </div>
+                </div>
+                 <!-- More items would be loaded from backend -->
+                 <p id="noSellerOrders" style="display: none;">You have no orders yet.</p>
+            </div>
+             <div id="sellerOrderDetail" class="hidden">
+                 <h3>Order Details: <span id="orderDetailId"></span></h3>
+                 <p><strong>Customer:</strong> <span id="orderDetailCustomer"></span></p>
+                 <p><strong>Shipping Address:</strong> <span id="orderDetailAddress"></span></p>
+                 <p><strong>Status:</strong> <span id="orderDetailStatus"></span></p>
+                 <div id="orderDetailTracking" style="display: none;">
+                     <p><strong>Tracking Number:</strong> <span id="orderDetailTrackingNumber"></span></p>
+                 </div>
+                 <h4>Items:</h4>
+                 <ul id="orderDetailItems" style="list-style: inside; padding-left: 0;">
+                     <!-- Items will be loaded here -->
+                 </ul>
+                 <button onclick="hideOrderDetail()">Back to Order List</button>
+                 <!-- Add form/button for tracking info input if status is Shipped -->
+             </div>
+        </section>
 
-      <div id="checkout" class="view placeholder">
-        <h2>Checkout</h2>
-        <p>Checkout process steps go here.</p>
-        <div class="form-group">
-          <label for="shippingAddress">Shipping Address:</label>
-          <textarea id="shippingAddress"></textarea>
-        </div>
-        <div class="form-group">
-          <label for="paymentInfo">Payment Information:</label>
-          <input type="text" id="paymentInfo" placeholder="Card Number, etc." />
-        </div>
-        <button class="btn-primary">Place Order</button>
-      </div>
+        <!-- Reusable UI Components Library Demonstration -->
+        <section id="reusableComponents" class="hidden">
+            <h2>Reusable UI Components Demo</h2>
+            <p>Examples of common UI elements for consistent design.</p>
 
-      <div id="login" class="view placeholder">
-        <h2>Login</h2>
-        <p>Login form goes here.</p>
-        <div class="form-group">
-          <label for="loginEmail">Email:</label>
-          <input type="email" id="loginEmail" />
-        </div>
-        <div class="form-group">
-          <label for="loginPassword">Password:</label>
-          <input type="password" id="loginPassword" />
-        </div>
-        <button class="btn-primary">Login</button>
-      </div>
+            <div class="component-demo">
+                <h4>Button Component</h4>
+                <div class="button-group">
+                    <button onclick="alert('Primary Button Clicked!')">Primary Button</button>
+                    <button style="background-color:#6c757d;" onclick="alert('Secondary Button Clicked!')">Secondary Button</button>
+                    <button style="background-color:#dc3545;" onclick="alert('Danger Button Clicked!')">Danger Button</button>
+                </div>
+            </div>
 
-      <div id="register" class="view placeholder">
-        <h2>Register</h2>
-        <p>Registration form goes here.</p>
-        <div class="form-group">
-          <label for="registerEmail">Email:</label>
-          <input type="email" id="registerEmail" />
-        </div>
-        <div class="form-group">
-          <label for="registerPassword">Password:</label>
-          <input type="password" id="registerPassword" />
-        </div>
-        <button class="btn-primary">Register</button>
-      </div>
+             <div class="component-demo">
+                <h4>Input Fields</h4>
+                 <div class="input-group">
+                    <div class="form-group">
+                        <label>Text Input:</label>
+                        <input type="text" placeholder="Enter text...">
+                    </div>
+                    <div class="form-group">
+                        <label>Number Input:</label>
+                        <input type="number" placeholder="Enter number..." value="42">
+                    </div>
+                     <div class="form-group">
+                        <label>Textarea:</label>
+                        <textarea rows="3" placeholder="Enter description..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Dropdown:</label>
+                        <select>
+                            <option value="">--Select--</option>
+                            <option>Option 1</option>
+                            <option>Option 2</option>
+                            <option>Option 3</option>
+                        </select>
+                    </div>
+                      <div class="form-group">
+                        <label>File Input:</label>
+                        <input type="file">
+                    </div>
+                 </div>
+            </div>
 
-      <div id="user-profile" class="view placeholder">
-        <h2>User Profile</h2>
-        <p>Manage your profile and addresses here.</p>
-      </div>
+             <div class="component-demo">
+                <h4>Basic Product Card Structure</h4>
+                 <p>Used in Product Listing pages.</p>
+                 <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                    <div class="product-card-demo">
+                        <img src="https://via.placeholder.com/180x120?text=Craft+Item+1" alt="Product Image">
+                        <h5>Handmade Pottery Bowl</h5>
+                        <p>$29.50</p>
+                         <button>View Details</button>
+                    </div>
+                     <div class="product-card-demo">
+                        <img src="https://via.placeholder.com/180x120?text=Craft+Item+2" alt="Product Image">
+                        <h5>Artisan Soap Bar</h5>
+                        <p>$8.00</p>
+                         <button>View Details</button>
+                    </div>
+                 </div>
+             </div>
+             <!-- More components (checkbox, radio, modal structure, loading spinner, etc.) would be added -->
+        </section>
 
-      <div id="order-history" class="view placeholder">
-        <h2>Order History</h2>
-        <p>Your past orders will appear here.</p>
-      </div>
+         <!-- Initial Admin Pages (Placeholders/Basic Views) -->
+         <section id="adminViews" class="hidden">
+             <h2>Admin Views (Basic)</h2>
+              <p>These sections demonstrate basic layout for admin lists. Data and actions would be managed via admin APIs.</p>
 
-      <div id="seller-dashboard" class="view placeholder">
-        <h2>Seller Dashboard</h2>
-        <p>Manage products, orders, and payouts.</p>
-      </div>
+             <h3>User List (Admin)</h3>
+             <div class="admin-list">
+                 <div class="admin-item">
+                     <div>User ID: user101</div>
+                     <div>Type: Customer</div>
+                     <div>Email: customer1@example.com</div>
+                      <div>Status: Active</div>
+                     <!-- Actions like View Profile, Block User would be here -->
+                 </div>
+                 <div class="admin-item">
+                     <div>User ID: user102</div>
+                     <div>Type: Seller</div>
+                     <div>Email: seller1@example.com</div>
+                     <div>Shop: My Handmade Shop</div>
+                     <div>Status: Approved</div>
+                      <!-- Actions like View Profile, Block User, View Products would be here -->
+                 </div>
+                  <div class="admin-item">
+                     <div>User ID: user103</div>
+                     <div>Type: Seller</div>
+                     <div>Email: seller2@example.com</div>
+                     <div>Shop: New Crafts</div>
+                     <div>Status: Pending Approval</div>
+                     <!-- Actions like Approve/Reject Seller would be here -->
+                 </div>
+             </div>
 
-      <div id="admin-dashboard" class="view placeholder">
-        <h2>Admin Dashboard</h2>
-        <p>Manage users, products, and site settings.</p>
-      </div>
-    </main>
+              <h3>All Products (Admin)</h3>
+             <div class="admin-list">
+                 <div class="admin-item">
+                     <div>Product ID: prodA123</div>
+                     <div>Name: Ceramic Mug - Blue Glaze</div>
+                     <div>Seller: My Handmade Shop (user102)</div>
+                      <div>Price: $25.00</div>
+                     <div>Status: Active</div>
+                      <!-- Actions like View Details, Edit, Remove, Approve/Reject (if moderation) would be here -->
+                 </div>
+                 <div class="admin-item">
+                     <div>Product ID: prodB456</div>
+                     <div>Name: Wooden Carving</div>
+                     <div>Seller: Wood Wonders (user104)</div>
+                      <div>Price: $75.00</div>
+                     <div>Status: Pending Approval</div>
+                      <!-- Actions like Approve/Reject Product, Edit, Remove would be here -->
+                 </div>
+                 <div class="admin-item">
+                     <div>Product ID: prodC789</div>
+                     <div>Name: Knitted Scarf</div>
+                     <div>Seller: My Handmade Shop (user102)</div>
+                      <div>Price: $35.00</div>
+                     <div>Status: Active</div>
+                      <!-- Actions like View Details, Edit, Remove would be here -->
+                 </div>
+             </div>
 
-    <footer>
-      <nav>
-        <a href="#">About Us</a>
-        <a href="#">Contact</a>
-        <a href="#">Terms</a>
-        <a href="#">Privacy</a>
-      </nav>
-      <p>&copy; 2023 Handmade Haven. All rights reserved.</p>
-    </footer>
+              <h3>All Orders (Admin)</h3>
+             <div class="admin-list">
+                 <div class="admin-item">
+                     <div>Order ID: 2001</div>
+                     <div>Customer: User Z (user105)</div>
+                     <div>Date: 2023-10-26</div>
+                     <div>Total: $50.00</div>
+                     <div>Status: Completed</div>
+                      <!-- Actions like View Order Details, Resolve Issues would be here -->
+                 </div>
+                 <div class="admin-item">
+                     <div>Order ID: 2002</div>
+                     <div>Customer: User W (user106)</div>
+                     <div>Date: 2023-10-26</div>
+                     <div>Total: $30.00</div>
+                     <div>Status: Shipped</div>
+                     <!-- Actions like View Order Details, Resolve Issues would be here -->
+                 </div>
+                  <div class="admin-item">
+                     <div>Order ID: 2003</div>
+                     <div>Customer: Alice Johnson</div>
+                     <div>Date: 2023-10-26</div>
+                     <div>Total: $90.00</div>
+                     <div>Status: Processing</div>
+                     <!-- Actions like View Order Details, Resolve Issues would be here -->
+                 </div>
+             </div>
+         </section>
+
+    </div> <!-- end container -->
 
     <script>
-      const views = document.querySelectorAll(".view");
-      const navLinks = document.querySelectorAll("header nav a, [data-view]");
-      const productGrids = document.querySelectorAll(".product-grid");
-      const homepageFeaturedGrid = document.querySelector(
-        "#homepage .product-grid"
-      );
-      const allProductsGrid = document.querySelector(
-        "#product-list .product-grid"
-      );
-      const detailTitle = document.getElementById("detail-title");
-      const detailPrice = document.getElementById("detail-price");
-      const detailDescription = document.getElementById("detail-description");
-      const detailImage = document.querySelector(
-        "#product-detail .product-images img"
-      );
-      const addToCartBtn = document.getElementById("add-to-cart-btn");
-      const cartItemsContainer = document.querySelector(".cart-items");
-      const cartSubtotalSpan = document.getElementById("cart-subtotal");
-      const cartCountSpan = document.querySelector(".cart-count");
+        // --- Section Toggling ---
+        const navButtons = document.querySelectorAll('nav button');
+        const sections = document.querySelectorAll('section');
 
-      let products = [
-        {
-          id: 1,
-          name: "Handmade Mug",
-          price: 18.5,
-          image: "https://via.placeholder.com/180x120?text=Mug",
-          description: "A beautiful ceramic mug.",
-        },
-        {
-          id: 2,
-          name: "Wooden Coasters (Set of 4)",
-          price: 25.0,
-          image: "https://via.placeholder.com/180x120?text=Coasters",
-          description: "Set of 4 engraved wooden coasters.",
-        },
-        {
-          id: 3,
-          name: "Knitted Scarf",
-          price: 35.0,
-          image: "https://via.placeholder.com/180x120?text=Scarf",
-          description: "Soft wool knitted scarf.",
-        },
-        {
-          id: 4,
-          name: "Leather Wallet",
-          price: 50.0,
-          image: "https://via.placeholder.com/180x120?text=Wallet",
-          description: "Hand-stitched leather wallet.",
-        },
-        {
-          id: 5,
-          name: "Painted Canvas",
-          price: 85.0,
-          image: "https://via.placeholder.com/180x120?text=Canvas",
-          description: "Original acrylic painting on canvas.",
-        },
-        {
-          id: 6,
-          name: "Silver Ring",
-          price: 45.0,
-          image: "https://via.placeholder.com/180x120?text=Ring",
-          description: "Sterling silver handcrafted ring.",
-        },
-      ];
-
-      let cart = [];
-
-      function showView(viewId) {
-        views.forEach((view) => view.classList.remove("active"));
-        const activeView = document.getElementById(viewId);
-        if (activeView) {
-          activeView.classList.add("active");
-        } else {
-          document.getElementById("homepage").classList.add("active");
-          console.error("View not found:", viewId);
-        }
-      }
-
-      function renderProducts(gridElement, productArray) {
-        gridElement.innerHTML = "";
-        productArray.forEach((product) => {
-          const productItem = document.createElement("div");
-          productItem.classList.add("product-item");
-          productItem.dataset.productId = product.id;
-          productItem.innerHTML = `
-                    <img src="${product.image}" alt="${product.name}">
-                    <h4>${product.name}</h4>
-                    <p>$${product.price.toFixed(2)}</p>
-                `;
-          productItem.addEventListener("click", () =>
-            renderProductDetail(product.id)
-          );
-          gridElement.appendChild(productItem);
-        });
-      }
-
-      function renderProductDetail(productId) {
-        const product = products.find((p) => p.id === productId);
-        if (!product) {
-          console.error("Product not found:", productId);
-          showView("homepage");
-          return;
-        }
-        detailTitle.textContent = product.name;
-        detailPrice.textContent = `$${product.price.toFixed(2)}`;
-        detailDescription.textContent = product.description;
-        detailImage.src = product.image.replace("180x120", "400x300"); // Use a larger placeholder image
-        detailImage.alt = product.name;
-        addToCartBtn.dataset.productId = product.id;
-        showView("product-detail");
-      }
-
-      function updateCartCount() {
-        const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-        cartCountSpan.textContent = count;
-      }
-
-      function updateCartTotal() {
-        const total = cart.reduce(
-          (sum, item) => sum + item.price * item.quantity,
-          0
-        );
-        cartSubtotalSpan.textContent = total.toFixed(2);
-      }
-
-      function renderCart() {
-        cartItemsContainer.innerHTML = "";
-        if (cart.length === 0) {
-          cartItemsContainer.innerHTML = "<p>Your cart is empty.</p>";
-        } else {
-          cart.forEach((item) => {
-            const cartItemElement = document.createElement("div");
-            cartItemElement.classList.add("cart-item");
-            cartItemElement.innerHTML = `
-                        <div class="item-info">
-                            <img src="${item.image}" alt="${item.name}">
-                            <div class="item-details">
-                                <h4>${item.name}</h4>
-                                <p>$${item.price.toFixed(2)}</p>
-                            </div>
-                        </div>
-                        <div class="item-quantity">
-                            Qty: <input type="number" value="${
-                              item.quantity
-                            }" min="1" data-item-id="${item.id}">
-                            <button class="remove-item-btn" data-item-id="${
-                              item.id
-                            }">Remove</button>
-                        </div>
-                    `;
-            cartItemsContainer.appendChild(cartItemElement);
-          });
-
-          cartItemsContainer
-            .querySelectorAll(".item-quantity input")
-            .forEach((input) => {
-              input.addEventListener("change", handleQuantityChange);
+        function showSection(id) {
+            sections.forEach(section => {
+                section.classList.add('hidden');
             });
-          cartItemsContainer
-            .querySelectorAll(".remove-item-btn")
-            .forEach((button) => {
-              button.addEventListener("click", handleRemoveItem);
-            });
-        }
-        updateCartTotal();
-        updateCartCount();
-      }
+             navButtons.forEach(button => {
+                 button.classList.remove('active');
+             });
 
-      function addToCart(productId) {
-        const product = products.find((p) => p.id === productId);
-        if (!product) return;
-
-        const existingItemIndex = cart.findIndex(
-          (item) => item.id === productId
-        );
-
-        if (existingItemIndex > -1) {
-          cart[existingItemIndex].quantity++;
-        } else {
-          cart.push({ ...product, quantity: 1 });
-        }
-        updateCartCount();
-        alert(`${product.name} added to cart!`);
-      }
-
-      function handleQuantityChange(event) {
-        const itemId = parseInt(event.target.dataset.itemId);
-        const newQuantity = parseInt(event.target.value);
-        const item = cart.find((i) => i.id === itemId);
-        if (item && newQuantity > 0) {
-          item.quantity = newQuantity;
-          renderCart();
-        } else if (newQuantity <= 0) {
-          removeFromCart(itemId);
-        }
-      }
-
-      function handleRemoveItem(event) {
-        const itemId = parseInt(event.target.dataset.itemId);
-        removeFromCart(itemId);
-      }
-
-      function removeFromCart(itemId) {
-        cart = cart.filter((item) => item.id !== itemId);
-        renderCart();
-      }
-
-      // Event Listeners for Navigation
-      navLinks.forEach((link) => {
-        link.addEventListener("click", (event) => {
-          event.preventDefault();
-          const viewId = link.dataset.view;
-          if (viewId) {
-            if (viewId === "cart") {
-              renderCart();
+            const targetSection = document.getElementById(id);
+            if (targetSection) {
+                 targetSection.classList.remove('hidden');
+                 const activeButton = document.querySelector(`nav button[data-section="${id}"]`);
+                 if(activeButton) {
+                     activeButton.classList.add('active');
+                 }
+                 // Hide order detail when switching away from order management
+                 if (id !== 'orderManagement') {
+                      document.getElementById('sellerOrderDetail').classList.add('hidden');
+                      document.getElementById('sellerOrderList').classList.remove('hidden');
+                 }
             }
-            showView(viewId);
-          }
+        }
+
+        navButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetId = button.getAttribute('data-section');
+                showSection(targetId);
+            });
         });
-      });
 
-      // Event Listener for Add to Cart Button
-      addToCartBtn.addEventListener("click", (event) => {
-        const productId = parseInt(event.target.dataset.productId);
-        addToCart(productId);
-      });
 
-      // Initial render
-      document.addEventListener("DOMContentLoaded", () => {
-        renderProducts(homepageFeaturedGrid, products.slice(0, 4)); // Show first 4 on homepage
-        renderProducts(allProductsGrid, products); // Show all on product list page
-        showView("homepage"); // Start on the homepage
-        updateCartCount(); // Initialize cart count display
-      });
+        // Initially show the first section (Seller Profile) on page load
+        document.addEventListener('DOMContentLoaded', () => {
+             showSection('sellerProfile');
+        });
+
+
+        // --- Seller Profile Form ---
+        const sellerProfileForm = document.getElementById('sellerProfileForm');
+        if (sellerProfileForm) {
+            sellerProfileForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                // Simple client-side validation check
+                if (!sellerProfileForm.checkValidity()) {
+                    alert('Please fill out all required fields.');
+                    return;
+                }
+
+                const formData = new FormData(sellerProfileForm);
+                const profileData = {};
+                 for (let [key, value] of formData.entries()) {
+                     if (key !== 'profileImage') { // Exclude File object for simple log
+                         profileData[key] = value;
+                     } else {
+                          if (value && value.name) {
+                             profileData[key] = value.name; // Log file name
+                          } else {
+                             profileData[key] = 'No file selected';
+                          }
+                     }
+                 }
+
+                console.log('Seller Profile Data Submitted:', profileData);
+                // In a real application, you would send `formData` or `profileData`
+                // to a backend API endpoint (e.g., POST or PUT /api/seller/profile)
+                // using fetch() or XMLHttpRequest.
+                alert('Seller profile saved (simulated)! Check console for data.');
+
+                // Assuming success, no action needed other than confirmation
+            });
+        }
+
+
+        // --- Add Product Form ---
+        const addProductForm = document.getElementById('addProductForm');
+         if (addProductForm) {
+            addProductForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                 // Simple client-side validation check
+                if (!addProductForm.checkValidity()) {
+                    alert('Please fill out all required fields correctly.');
+                     // Add more specific validation (e.g., price > 0)
+                    if (parseFloat(document.getElementById('productPrice').value) <= 0) {
+                        alert('Price must be greater than zero.');
+                    }
+                     if (parseInt(document.getElementById('productQuantity').value) < 0) {
+                         alert('Quantity cannot be negative.');
+                     }
+                     if (document.getElementById('productImages').files.length === 0) {
+                          alert('Please upload at least one image.');
+                     }
+
+                    return;
+                }
+                 if (parseFloat(document.getElementById('productPrice').value) <= 0 || parseInt(document.getElementById('productQuantity').value) < 0 || document.getElementById('productImages').files.length === 0) {
+                      alert('Please check price, quantity, and images.');
+                      return;
+                 }
+
+
+                const formData = new FormData(addProductForm);
+                 // For demonstration, convert to a simple object, excluding file details
+                 const productData = {};
+                 for (let [key, value] of formData.entries()) {
+                     if (key !== 'productImages') { // Exclude FileList for simple log
+                         productData[key] = value;
+                     } else {
+                         // Log file names instead of FileList object
+                         const files = formData.getAll('productImages');
+                         productData[key] = files.map(file => file.name).join(', ');
+                     }
+                 }
+
+                console.log('New Product Data Submitted:', productData);
+                // In a real application, you would send `formData`
+                // to a backend API (e.g., POST /api/seller/products)
+                // using fetch() or XMLHttpRequest. The backend handles file uploads.
+                alert('New product added (simulated)! Check console for data.');
+                addProductForm.reset(); // Clear form
+                 // Optionally, refresh or add the new item to the seller product list view
+            });
+        }
+
+
+        // --- Seller Product List Actions ---
+        function editProduct(productId) {
+            console.log('Edit product:', productId);
+            // In a real application:
+            // 1. Fetch existing product data from backend API (e.g., GET /api/seller/products/{productId})
+            // 2. Populate the "Add New Product" form (or a dedicated edit form) with the fetched data.
+            // 3. Change the form's behavior/button to "Update Product" and submit a PUT/PATCH request.
+             alert('Simulating edit for product: ' + productId + '. In a real app, this would load data into a form.');
+        }
+
+        function deleteProduct(productId, buttonElement) {
+            console.log('Delete product:', productId);
+            if (confirm('Are you sure you want to delete product ' + productId + '?')) {
+                // Simulate calling backend API to delete product (e.g., DELETE /api/seller/products/{productId})
+                console.log('Simulating API call: DELETE /api/seller/products/' + productId);
+                alert('Simulating delete request sent for product: ' + productId);
+
+                // Simulate successful deletion by removing the item from the list (client-side simulation)
+                const itemToRemove = buttonElement.closest('.product-item');
+                if(itemToRemove) {
+                    itemToRemove.remove();
+                    console.log('Product item removed from list:', productId);
+                    // Check if list is now empty to show "no products" message
+                    const productList = document.getElementById('sellerProductList');
+                    const noProductsMessage = document.getElementById('noSellerProducts');
+                    if (productList.querySelectorAll('.product-item').length === 0) {
+                        noProductsMessage.style.display = 'block';
+                    }
+                }
+            }
+        }
+
+        // Initial check for no products
+         document.addEventListener('DOMContentLoaded', () => {
+             const productList = document.getElementById('sellerProductList');
+             const noProductsMessage = document.getElementById('noSellerProducts');
+             if (productList && noProductsMessage && productList.querySelectorAll('.product-item').length === 0) {
+                  noProductsMessage.style.display = 'block';
+             }
+         });
+
+
+        // --- Seller Order Management ---
+         function updateOrderStatus(orderId, newStatus, buttonElement) {
+             console.log(`Updating status for order ${orderId} to "${newStatus}"`);
+             // Simulate calling backend API to update order status (e.g., PUT /api/seller/orders/{orderId}/status)
+             console.log(`Simulating API call: PUT /api/seller/orders/${orderId}/status with status="${newStatus}"`);
+             alert(`Simulating status update for order ${orderId} to "${newStatus}".`);
+
+             // Simulate success: Update the status text on the page
+             const statusSpan = document.getElementById(`status-${orderId}`);
+             if (statusSpan) {
+                 statusSpan.textContent = newStatus;
+             }
+
+             // Simulate success: Disable the "Mark as Shipped" button if status is Shipped
+             if (newStatus === 'Shipped' && buttonElement) {
+                 buttonElement.disabled = true;
+                 buttonElement.textContent = 'Status Updated';
+                 buttonElement.style.backgroundColor = '#6c757d'; // Grey out
+             }
+
+             // In a real app, you might also add a field/button to enter tracking info now.
+         }
+
+         // Placeholder order details data structure (would be fetched from backend)
+         const sellerOrderDetailsData = {
+             'order1': {
+                 customer: 'Jane Doe',
+                 address: '123 Main St, Anytown, CA 91234',
+                 status: 'Processing',
+                 items: [{name: 'Ceramic Mug - Blue Glaze', qty: 1, price: 25.00}],
+                 tracking: null // No tracking yet
+             },
+              'order2': {
+                 customer: 'John Smith',
+                 address: '456 Oak Ave, Otherville, NY 56789',
+                 status: 'Shipped',
+                 items: [{name: 'Hand-knitted Wool Scarf', qty: 1, price: 35.00}, {name: 'Ceramic Mug - Blue Glaze', qty: 1, price: 25.00}],
+                 tracking: 'TRACK12345ABC' // Has tracking
+             },
+              'order3': {
+                 customer: 'Alice Johnson',
+                 address: '789 Pine Ln, Villagetown, TX 78901',
+                 status: 'Processing',
+                 items: [{name: 'Silver Leaf Pendant', qty: 2, price: 45.00}],
+                 tracking: null
+             }
+         };
+
+
+         function viewOrderDetail(orderId) {
+             console.log('Viewing details for order:', orderId);
+             // Simulate fetching order details from backend API (e.g., GET /api/seller/orders/{orderId})
+             // using the placeholder data structure above
+             const detail = sellerOrderDetailsData[orderId];
+
+             if (detail) {
+                 document.getElementById('orderDetailId').textContent = orderId;
+                 document.getElementById('orderDetailCustomer').textContent = detail.customer;
+                 document.getElementById('orderDetailAddress').textContent = detail.address;
+                 document.getElementById('orderDetailStatus').textContent = detail.status;
+
+                 const trackingDiv = document.getElementById('orderDetailTracking');
+                 const trackingSpan = document.getElementById('orderDetailTrackingNumber');
+                 if (detail.tracking) {
+                     trackingSpan.textContent = detail.tracking;
+                     trackingDiv.style.display = 'block';
+                 } else {
+                     trackingDiv.style.display = 'none';
+                     trackingSpan.textContent = ''; // Clear previous tracking
+                 }
+
+
+                 const itemList = document.getElementById('orderDetailItems');
+                 itemList.innerHTML = ''; // Clear current items
+                 detail.items.forEach(item => {
+                     const li = document.createElement('li');
+                     li.textContent = `${item.qty} x ${item.name} ($${item.price.toFixed(2)} each)`;
+                     itemList.appendChild(li);
+                 });
+
+                 document.getElementById('sellerOrderList').classList.add('hidden');
+                 document.getElementById('sellerOrderDetail').classList.remove('hidden');
+             } else {
+                 alert('Order details not found for ' + orderId);
+                 console.error('Order details not found for ID:', orderId);
+             }
+         }
+
+         function hideOrderDetail() {
+              document.getElementById('sellerOrderDetail').classList.add('hidden');
+              document.getElementById('sellerOrderList').classList.remove('hidden');
+         }
+
+         // Initial check for no orders
+         document.addEventListener('DOMContentLoaded', () => {
+             const orderList = document.getElementById('sellerOrderList');
+             const noOrdersMessage = document.getElementById('noSellerOrders');
+             if (orderList && noOrdersMessage && orderList.querySelectorAll('.order-item').length === 0) {
+                  noOrdersMessage.style.display = 'block';
+             }
+         });
+
+
+        // --- Admin Views (Placeholder) ---
+        // Admin view functions would be similar to seller list views but fetching
+        // different endpoints and potentially having different actions (approve, block, etc.)
+        // For this demo, the content is static HTML placeholders, no JS interactions needed beyond section switching.
+
     </script>
-  </body>
+</body>
 </html>

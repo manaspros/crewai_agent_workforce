@@ -1,262 +1,165 @@
-**Product Specification Document: E-commerce Website for Handmade Crafts**
+## Product Specification Document: E-commerce Website for Handmade Crafts
 
 **1. Introduction**
 
-This document outlines the product requirements and scope for a new e-commerce platform specifically designed for buying and selling handmade crafts. The platform aims to connect independent artisans directly with customers who appreciate unique, handcrafted items. It will provide tools for sellers to showcase their work and manage their business, and for buyers to discover, purchase, and review handmade products easily and securely.
+This document outlines the product requirements and scope for an e-commerce website specializing in handmade crafts. The platform aims to connect independent artisans and craftspeople with customers seeking unique, handcrafted goods.
 
-**2. Vision**
+**2. Product Vision**
 
-To be the leading online marketplace connecting creators of unique handmade crafts with customers seeking authentic, high-quality artisanal goods, fostering a vibrant community of makers and buyers.
+To be the leading online marketplace for unique, high-quality handmade crafts, empowering artisans to reach a global audience and providing customers with a curated selection of authentic items.
 
-**3. Goals**
+**3. Target Audience**
 
-*   **Business Goals:**
-    *   Generate revenue through seller fees (e.g., listing fees, commission on sales).
-    *   Build a critical mass of both sellers and buyers within the first 18 months.
-    *   Establish a reputation for quality, authenticity, and excellent customer service.
-*   **Product Goals:**
-    *   Provide a user-friendly and intuitive experience for both buyers and sellers.
-    *   Ensure a secure and reliable platform for transactions.
-    *   Enable effective discovery and showcasing of handmade products.
-    *   Support key e-commerce functionalities (browsing, search, cart, checkout, order management).
+*   **Customers:** Individuals interested in purchasing unique, handcrafted items; people looking for personalized gifts; those who value supporting independent artisans.
+*   **Sellers (Artisans/Craftspeople):** Independent creators who make handmade goods and want an online platform to sell their products without the complexities of setting up their own e-commerce site.
+*   **Administrators:** Internal team responsible for managing the platform, monitoring activity, and providing support.
 
-**4. Target Audience**
+**4. Key Features**
 
-*   **Buyers:** Individuals looking for unique, handmade items for personal use, gifts, or home decor. They value quality, craftsmanship, and supporting independent artisans.
-*   **Sellers (Artisans/Makers):** Individuals or small businesses creating and selling handmade goods. They need a platform to reach a wider audience, manage inventory, process orders, and handle payments.
-*   **Administrators:** Platform operators responsible for site management, user support, content moderation, and monitoring platform performance.
+*   **Customer Features:**
+    *   Product Browsing & Search
+    *   Product Details View (with multiple images, description, seller info)
+    *   Shopping Cart Management
+    *   Checkout Process (Payments)
+    *   User Account Management (Profile, Order History, Saved Items)
+    *   Product Reviews & Ratings
+    *   Seller Profile View
+*   **Seller Features:**
+    *   Seller Account Registration & Profile Setup
+    *   Product Listing Management (Add, Edit, Delete products)
+    *   Order Management (View, Update Status, Mark as Shipped)
+    *   Sales Reporting (Basic overview)
+    *   Communication with Customers (Messaging)
+    *   Payout Management (View earnings, Request payout - initial version may handle manually)
+*   **Administrator Features:**
+    *   User Management (View, Approve/Reject Sellers, Block Users)
+    *   Product Management (View, Approve/Reject listings, Edit/Remove products)
+    *   Order Management (View all orders, Resolve issues)
+    *   Category & Tag Management
+    *   Content Management (Homepage banners, policies)
+    *   Reporting & Analytics (Basic sales, user activity)
+    *   Payout Processing (Manual trigger/approval initially)
 
-**5. Key Features**
+**5. User Stories**
 
-**5.1. Public Features (No Login Required)**
+**5.1. Customer User Stories**
 
-*   **Homepage:**
-    *   Featured products/shops.
-    *   Categories browsing.
-    *   Search bar.
-    *   Promotional banners/sections.
-    *   Footer with links (About Us, Contact, Terms, Privacy).
-*   **Product Listing Page (Category/Search Results):**
-    *   Display products with thumbnail image, title, price, seller name/shop name.
-    *   Filtering and sorting options (e.g., by category, price range, new arrivals, seller).
-    *   Pagination/Infinite scroll.
-*   **Product Detail Page:**
-    *   Multiple high-resolution product images (with zoom).
-    *   Product title, description, price.
-    *   Variations (e.g., size, color, material) with price adjustments if applicable.
-    *   "Add to Cart" button.
-    *   Seller/Shop information and link to shop page.
-    *   Customer reviews section.
-    *   Shipping and return information.
-    *   Related products section.
-*   **Shop Page (Public View):**
-    *   Shop banner and logo.
-    *   Shop name and description.
-    *   List of products by this seller.
-    *   Seller's profile information (optional).
-    *   Reviews specific to the seller/shop (optional).
-*   **Search Functionality:**
-    *   Keyword search across product titles, descriptions, tags, and shop names.
-    *   Search suggestions/autocomplete.
-    *   Faceted search for filtering results.
+*   As a **Customer**, I want to browse products by category (e.g., Pottery, Jewelry, Textiles) so I can find items I'm interested in.
+*   As a **Customer**, I want to search for products using keywords (e.g., "ceramic mug", "knitted scarf") so I can find specific items.
+*   As a **Customer**, I want to view detailed product information including price, description, materials, dimensions, multiple images, and seller name so I can make an informed purchase decision.
+*   As a **Customer**, I want to add products to a shopping cart so I can purchase multiple items at once.
+*   As a **Customer**, I want to remove products from my shopping cart or update quantities before checkout.
+*   As a **Customer**, I want a secure and easy checkout process where I can enter shipping information and payment details.
+*   As a **Customer**, I want to create a user account so I can save my information, track orders, and view my purchase history.
+*   As a **Customer**, I want to save items to a wishlist or favorites list so I can easily find them later.
+*   As a **Customer**, I want to leave reviews and ratings for products I've purchased so I can share my experience and help others.
+*   As a **Customer**, I want to view a seller's profile to learn more about the artisan and their work.
+*   As a **Customer**, I want to receive email notifications about my order status (e.g., Order Confirmed, Shipped).
 
-**5.2. Buyer Features (Requires Login)**
+**5.2. Seller User Stories**
 
-*   **User Registration & Login:**
-    *   Email/password registration.
-    *   Social login options (Google, Facebook - optional).
-    *   Password reset functionality.
-*   **User Profile:**
-    *   Manage personal information (name, email).
-    *   Manage shipping addresses (add, edit, delete, set default).
-    *   Manage payment methods (securely stored tokens - optional for initial scope).
-*   **Shopping Cart:**
-    *   Add/remove items.
-    *   Update quantities.
-    *   Display subtotal.
-    *   Calculate estimated shipping costs (based on address and seller location - complex, maybe estimate or fixed for V1).
-    *   Apply discount codes (future scope).
-    *   Proceed to Checkout button.
-*   **Checkout Process:**
-    *   Multi-step process (Shipping Address -> Shipping Method -> Payment Method -> Order Summary -> Place Order).
-    *   Integration with secure payment gateway (e.g., Stripe, PayPal).
-    *   Confirmation page after successful order.
-    *   Order confirmation email.
-*   **Order History:**
-    *   View list of past orders.
-    *   View details of a specific order (items, price, shipping address, payment status, order status).
-    *   Track shipping (if tracking info is provided by seller).
-*   **Product Reviews & Ratings:**
-    *   Ability to leave a star rating and written review for purchased products.
-    *   Option to add photos to a review (future scope).
-*   **Wishlist (Optional for V1):**
-    *   Save products for later purchase.
+*   As a **Seller**, I want to register for a seller account and set up my profile with my name, shop name, bio, and profile image.
+*   As a **Seller**, I want to add new product listings including title, description, price, quantity, category, tags, and multiple high-quality images.
+*   As a **Seller**, I want to edit existing product listings to update information or prices.
+*   As a **Seller**, I want to temporarily unpublish or permanently delete product listings.
+*   As a **Seller**, I want to view a list of my pending and completed orders.
+*   As a **Seller**, I want to update the status of an order (e.g., Processing, Shipped, Completed).
+*   As a **Seller**, I want to enter tracking information for shipped orders.
+*   As a **Seller**, I want to view basic reports on my sales and earnings.
+*   As a **Seller**, I want to communicate with customers regarding their orders or product inquiries (e.g., via an internal messaging system or masked email).
+*   As a **Seller**, I want to receive notifications when a new order is placed or a customer sends a message.
 
-**5.3. Seller Features (Requires Login & Approval)**
+**5.3. Administrator User Stories**
 
-*   **Seller Registration & Onboarding:**
-    *   Apply to become a seller (requires review/approval by admin).
-    *   Provide business details, payment information (for payouts).
-*   **Seller Dashboard:**
-    *   Overview of sales, pending orders, inventory alerts.
-    *   Quick links to key management areas.
-*   **Shop Setup:**
-    *   Customize shop profile (name, logo, banner, description, story).
-    *   Set up shop policies (shipping, returns, processing times).
-*   **Product Management:**
-    *   Add new products (title, description, price, categories, tags, images, variations, stock quantity, shipping dimensions/weight - critical for calculating shipping).
-    *   Edit/delete existing products.
-    *   Bulk upload/edit (future scope).
-    *   Manage inventory levels.
-*   **Order Management:**
-    *   View list of incoming orders.
-    *   View details of each order (items, buyer info, shipping address, payment status).
-    *   Update order status (e.g., Pending, Processing, Shipped, Completed, Cancelled).
-    *   Add shipping tracking information.
-    *   Communicate with buyer (via platform messaging - future scope).
-*   **Payouts:**
-    *   View balance of earnings.
-    *   Request payout (manual or automated).
-    *   View payout history.
-*   **Reports (Basic for V1):**
-    *   View sales report over time.
+*   As an **Administrator**, I want to view a list of all users (Customers and Sellers).
+*   As an **Administrator**, I want to approve or reject new seller applications after reviewing their information.
+*   As an **Administrator**, I want to view and manage product listings across the platform, including approving new listings (if moderation is required), editing, or removing inappropriate items.
+*   As an **Administrator**, I want to manage product categories and tags.
+*   As an **Administrator**, I want to view all orders placed on the platform.
+*   As an **Administrator**, I want to resolve disputes or issues between customers and sellers.
+*   As an **Administrator**, I want to manage website content such as homepage banners, promotional sections, and static pages (e.g., About Us, Terms of Service).
+*   As an **Administrator**, I want to access basic reports on overall sales, active users, and popular products.
+*   As an **Administrator**, I want to process seller payouts (initially manual based on reports).
 
-**5.4. Admin Features (Requires Admin Login)**
+**6. Technical Specifications**
 
-*   **Dashboard:**
-    *   Overall site metrics (users, orders, sales volume).
-    *   Recent activity.
-*   **User Management:**
-    *   View list of all users (buyers, sellers, admins).
-    *   Edit user profiles.
-    *   Activate/deactivate users.
-    *   Approve/reject seller applications.
-*   **Product/Listing Approval:**
-    *   Review newly submitted or updated product listings before they go live.
-    *   Approve, reject (with reason), or request changes.
-*   **Order Monitoring:**
-    *   View and search all orders across the platform.
-    *   View order details.
-    *   Resolve order disputes (manual process initially).
-*   **Content Management:**
-    *   Manage static pages (About Us, Contact, Terms, Privacy).
-    *   Manage homepage content (banners, featured sections).
-    *   Manage product categories and tags.
-*   **Reporting:**
-    *   Generate reports on sales, users, seller performance, fees collected.
-*   **Settings:**
-    *   Configure site settings (e.g., currency, commission rates, payment gateway settings).
+**6.1. Frontend Requirements**
 
-**6. User Stories (Examples)**
+*   **Technology Stack:**
+    *   Modern JavaScript Framework (e.g., React, Vue.js, Angular)
+    *   HTML5, CSS3 (using a preprocessor like SASS or LESS, or styled components)
+    *   State Management Library (e.g., Redux, Vuex, Zustand)
+    *   Build Tools (e.g., Webpack, Vite)
+*   **Key Components:**
+    *   Responsive Layout: The website must be fully responsive and work seamlessly on desktop, tablet, and mobile devices.
+    *   Reusable UI Components (e.g., Product Card, Button, Form Input).
+    *   Secure handling of user input and session data.
+    *   Integration with Backend APIs for data fetching and submission.
+    *   Efficient image loading and optimization.
+    *   Client-side form validation.
+    *   Routing for different pages (Home, Product List, Product Detail, Cart, Checkout, User Dashboard, Seller Dashboard, Admin Dashboard).
+*   **Non-functional Requirements:**
+    *   **Performance:** Fast loading times (target < 3 seconds on standard broadband).
+    *   **Responsiveness:** Adapts correctly to various screen sizes and orientations.
+    *   **Accessibility:** Adherence to WCAG 2.1 AA guidelines where feasible.
+    *   **Browser Compatibility:** Support for latest versions of major browsers (Chrome, Firefox, Safari, Edge).
 
-*   **As a Buyer,** I want to easily search for specific types of handmade crafts so I can find what I'm looking for quickly.
-*   **As a Buyer,** I want to see multiple clear photos of a product from different angles so I can assess its quality and detail.
-*   **As a Buyer,** I want a secure checkout process so I feel confident entering my payment information.
-*   **As a Buyer,** I want to be able to track my order after it's shipped so I know when to expect it.
-*   **As a Seller,** I want an easy way to add new products with variations and manage inventory levels so I can keep my shop updated.
-*   **As a Seller,** I want to be notified of new orders and see all the necessary details in one place so I can process them efficiently.
-*   **As a Seller,** I want to be able to update the order status and add tracking information so buyers are informed.
-*   **As an Admin,** I want to be able to review new seller applications and product listings to maintain quality control.
-*   **As an Admin,** I want to view site-wide sales data to monitor platform performance.
+**6.2. Backend Requirements**
 
-**7. Technical Specifications**
+*   **Technology Stack:**
+    *   Backend Framework (e.g., Node.js with Express/NestJS, Python with Django/Flask, Ruby on Rails, Java with Spring Boot) - *Choice TBD based on team expertise and project needs.*
+    *   Database (e.g., PostgreSQL, MySQL, MongoDB) - *Relational database is likely suitable for handling complex relationships between users, products, orders, etc.*
+    *   Authentication/Authorization Library (e.g., JWT, OAuth 2.0)
+    *   Payment Gateway Integration (e.g., Stripe, PayPal, Square)
+    *   Email Service Integration (e.g., SendGrid, Mailgun)
+*   **Key Components:**
+    *   RESTful API Endpoints:
+        *   User Authentication & Authorization (Login, Register, Logout)
+        *   User Management (CRUD for users)
+        *   Product Management (CRUD for products, filtering, sorting, search)
+        *   Category & Tag Management (CRUD)
+        *   Shopping Cart Management (Add, Remove, Update items)
+        *   Order Management (Create, View, Update status)
+        *   Payment Processing (Initiate, Confirm payments via gateway)
+        *   Review & Rating Management (Create, View reviews)
+        *   Seller Management (Seller application, Seller profile CRUD)
+        *   Admin APIs (User approval, Product moderation, Reporting data)
+        *   Messaging (Optional initial version, or simple contact forms)
+    *   Database Design: Schemas for Users (Customers, Sellers, Admins), Products, Orders, Order Items, Categories, Tags, Reviews, Payouts.
+    *   Background Jobs: For sending email notifications, processing payouts, generating reports (future iterations).
+    *   File Storage: For storing product images (e.g., S3 compatible storage or local).
+    *   Security: Input validation, protecting against common web vulnerabilities (SQL injection, XSS, CSRF), secure API keys, data encryption (especially sensitive payment info).
+*   **Non-functional Requirements:**
+    *   **Security:** Robust authentication and authorization, data protection, PCI compliance considerations for payment handling.
+    *   **Scalability:** Architecture should allow for future scaling as the number of users, products, and orders grow.
+    *   **Reliability:** High uptime and error handling.
+    *   **Maintainability:** Well-structured code, clear documentation, testable units.
+    *   **Performance:** API response times should be fast (target < 500ms for most endpoints).
 
-**7.1. Frontend Requirements**
+**7. Scope (Initial Version)**
 
-*   **Technologies:**
-    *   HTML5, CSS3, JavaScript.
-    *   Frontend Framework: React, Vue.js, or Angular (e.g., React for component-based architecture and efficient updates).
-    *   Styling: CSS Modules, styled-components, or a CSS framework (e.g., Tailwind CSS, Bootstrap - customized).
-*   **Responsiveness:**
-    *   The website must be fully responsive and provide an optimal viewing experience across desktop, tablet, and mobile devices.
-*   **Performance:**
-    *   Pages should load quickly (target < 3 seconds).
-    *   Image optimization (lazy loading, appropriate formats like WebP).
-    *   Code splitting and bundling for efficient resource loading.
-*   **Accessibility:**
-    *   Adhere to WCAG 2.1 AA standards where feasible within scope.
-    *   Semantic HTML, keyboard navigation support, ARIA attributes.
-*   **Security:**
-    *   Secure user input validation.
-    *   HTTPS enforced for all pages.
-    *   Protect against common frontend vulnerabilities (e.g., XSS).
+**Included:**
 
-**7.2. Backend Requirements**
+*   Core Customer features: Browsing, Searching, Product Details, Cart, Checkout (Single Payment Method), User Account (Profile, Order History), Product Reviews.
+*   Core Seller features: Seller Registration & Profile, Product Listing (Add, Edit, Delete), Order Management (View, Update Status, Add Tracking).
+*   Core Administrator features: User Management (View, Approve/Reject Sellers), Product Management (View, Edit, Remove), Order Viewing, Category/Tag Management.
+*   Basic email notifications (Order confirmation, Shipment notification).
+*   Integration with one major payment gateway.
 
-*   **Technologies:**
-    *   Backend Language/Framework: Python (Django/Flask), Node.js (Express/NestJS), Ruby (Rails), or PHP (Laravel) (e.g., Python/Django for rapid development, security features, and large community).
-    *   Database: PostgreSQL or MySQL (Relational database for structured e-commerce data).
-    *   Caching: Redis or Memcached for database query caching and session storage.
-*   **API:**
-    *   RESTful API for communication between frontend and backend.
-    *   Well-documented API endpoints.
-*   **Authentication & Authorization:**
-    *   Secure user authentication system (e.g., JWT or session-based).
-    *   Role-based authorization to control access to different functionalities (buyer, seller, admin).
-*   **Payment Gateway Integration:**
-    *   Integrate with a reputable payment gateway (e.g., Stripe, PayPal, Square).
-    *   Implement secure payment processing flow (client-side tokenization, server-side charge creation).
-    *   Handle webhooks for payment confirmations and status updates.
-*   **Shipping Calculations:**
-    *   Initial scope: Potentially fixed price shipping per seller/product type, or manual calculation by seller.
-    *   Future scope: Integration with shipping carrier APIs (e.g., USPS, FedEx) for real-time rate calculation based on origin (seller location), destination (buyer address), and package dimensions/weight.
-*   **Scalability:**
-    *   Design the architecture to handle potential growth in users, products, and orders.
-    *   Consider microservices architecture for larger scale (future scope, monolith for V1 is acceptable).
-    *   Database indexing and query optimization.
-*   **Security:**
-    *   Protect against common backend vulnerabilities (e.g., SQL injection, CSRF, XSS).
-    *   Data encryption (especially sensitive payment/personal data).
-    *   Rate limiting on API endpoints.
-    *   Regular security audits.
-*   **Admin Panel:**
-    *   Build a secure backend administrative interface for managing users, products, orders, content, and settings. Can be part of the main application or a separate application.
-*   **Email Service Integration:**
-    *   Integration with an email service provider (e.g., SendGrid, Mailgun) for sending transactional emails (order confirmations, shipping notifications, password resets, seller application status).
-*   **File Storage:**
-    *   Use cloud storage (e.g., AWS S3, Google Cloud Storage) for storing product images and other assets.
+**Out of Scope (for this initial version):**
 
-**8. Scope (Minimum Viable Product - V1)**
+*   Advanced search filtering (e.g., by price range, materials).
+*   Personalization or recommendations.
+*   Seller dashboards with detailed analytics/reporting.
+*   Automated seller payout system (will be manual initially).
+*   Internal messaging system between customers and sellers.
+*   Multiple shipping options/calculators (flat rate or simple per-item rate initially).
+*   Wishlist/Favorites feature.
+*   Promotions or discount codes.
+*   Gift cards.
+*   Internationalization (Multi-language support).
+*   Complex tax calculations.
+*   Mobile applications (iOS/Android).
+*   User roles beyond Customer, Seller, Administrator (e.g., Moderator).
 
-**Included in V1:**
-
-*   Core public browsing and search.
-*   Buyer registration, login, profile (basic info, addresses).
-*   Shopping cart functionality.
-*   Basic checkout with one payment gateway integration.
-*   Order history for buyers.
-*   Product reviews (text and star rating).
-*   Seller application and admin approval process.
-*   Seller login and basic dashboard.
-*   Seller shop setup (basic profile).
-*   Basic product management (add, edit, delete single products, manage stock).
-*   Basic order management for sellers (view orders, update status, add tracking).
-*   Basic admin panel (user management, seller/product approval, order monitoring).
-*   Transactional emails (order confirmation, shipping).
-
-**Excluded from V1 (Future Scope):**
-
-*   Social login for buyers/sellers.
-*   Saved payment methods for buyers.
-*   Discount codes/coupon system.
-*   Wishlist functionality.
-*   Buyer-seller messaging system.
-*   Bulk product upload/edit for sellers.
-*   Advanced seller reports/analytics.
-*   Real-time shipping rate calculations (complex integration).
-*   Multi-currency support.
-*   Seller payout automation (manual payouts in V1).
-*   Image upload in reviews.
-*   Seller-specific reviews/ratings.
-
-**9. Future Considerations**
-
-*   Mobile native applications (iOS and Android).
-*   Advanced search and filtering capabilities.
-*   Personalized product recommendations.
-*   Marketing tools for sellers (promotions, advertising).
-*   Community features (forums, blogs, tutorials).
-*   Integration with social media for sharing.
-*   Analytics dashboard for sellers.
-*   Gift cards and loyalty programs.
-*   Internationalization (multi-language, multi-currency).
+This document serves as the foundation for the development team to begin the design and implementation phase. Further refinement and detailing will occur during sprint planning sessions.

@@ -1,1010 +1,1038 @@
-import json
-import os
-from flask import Flask, request, jsonify, g
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-import secrets
-from datetime import datetime
-from functools import wraps
+# This is the start of the single Python deliverable file.
+# Backend Engineer 1's code would go here (DB setup, User models, Auth routes, Admin User routes)
+# Backend Engineer 2's code would go here (Product models, Category/Tag models, Product routes, Search, Admin Product routes)
+# Backend Engineer 3's code goes below.
 
+import uuid
+from flask import Flask, request, jsonify
+from flask_jwt_extended import create_access_token, jwt_required, JWTManager, get_jwt_identity
+from datetime import datetime # Used for simulated timestamps
+
+# --- Conceptual Flask App Setup ---
+# This is a simplified representation. A real app would have proper config and structure.
+# Engineer 1 would typically handle the main Flask app initialization and configuration.
+# The following lines would likely be part of Engineer 1's initial setup code.
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+app.config["JWT_SECRET_KEY"] = "super-secret-engineer1-base-key-replace-me" # Main secret
+jwt = JWTManager(app)
 
-tokens = {}
+# --- Simulated Database ---
+# In a real application, this would be a database (SQLAlchemy, Django ORM, etc.)
+# Data structures simulating tables using in-memory dictionaries.
+# Engineer 1 would define and manage the actual database models and connection.
+# These dictionaries are shared conceptual data structures.
+# For Engineer 3's code to work in isolation for testing, they need minimal versions of shared data.
+# In the final merged file, these would be the actual database interfaces.
+users_db = {
+    "user1_cust": {"id": "user1_cust", "email": "customer1@example.com", "password_hash": "hashed_password", "role": "customer", "is_approved_seller": False, "profile": {"name": "Customer User", "shipping_address": "123 Customer St, Anytown, CA 91234"}},
+    "user2_seller": {"id": "user2_seller", "email": "seller1@example.com", "password_hash": "hashed_password", "role": "seller", "is_approved_seller": True, "profile": {"shop_name": "Seller Shop A", "bio": "We make stuff A"}},
+    "user3_admin": {"id": "user3_admin", "email": "admin1@example.com", "password_hash": "hashed_password", "role": "admin", "is_approved_seller": True, "profile": {}},
+    "user4_seller": {"id": "user4_seller", "email": "seller2@example.com", "password_hash": "hashed_password", "role": "seller", "is_approved_seller": True, "profile": {"shop_name": "Crafty Goods B", "bio": "Unique crafts B"}},
+    "user5_cust": {"id": "user5_cust", "email": "customer2@example.com", "password_hash": "hashed_password", "role": "customer", "is_approved_seller": False, "profile": {"name": "Another Customer", "shipping_address": "456 Another Ave, Sometown, NY 56789"}},
+}
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
-    role = db.Column(db.String(50), default='buyer')
-    addresses = db.relationship('Address', backref='user', lazy=True)
-    orders = db.relationship('Order', backref='buyer', lazy=True)
-    cart_items = db.relationship('CartItem', backref='user', lazy=True)
-    reviews = db.relationship('Review', backref='user', lazy=True)
-    seller_profile = db.relationship('SellerProfile', back_populates='user', uselist=False, foreign_keys='SellerProfile.user_id')
+products_db = {
+    "prod1_mug": {"id": "prod1_mug", "title": "Ceramic Mug", "description": "Handmade mug", "price": 25.00, "quantity": 15, "seller_id": "user2_seller", "category_id": "cat1_pottery", "image_urls": ["/images/prod1_mug_1.jpg", "/images/prod1_mug_2.jpg"], "status": "active"},
+    "prod2_scarf": {"id": "prod2_scarf", "title": "Knitted Scarf", "description": "Soft wool scarf", "price": 35.00, "quantity": 8, "seller_id": "user2_seller", "category_id": "cat2_textiles", "image_urls": ["/images/prod2_scarf_1.jpg"], "status": "active"},
+    "prod3_birdhouse": {"id": "prod3_birdhouse", "title": "Wooden Birdhouse", "description": "Hand-carved birdhouse", "price": 55.00, "quantity": 5, "seller_id": "user4_seller", "category_id": "cat3_wood", "image_urls": ["/images/prod3_birdhouse_1.jpg"], "status": "active"},
+    "prod4_earrings": {"id": "prod4_earrings", "title": "Silver Earrings", "description": "Delicate silver earrings", "price": 40.00, "quantity": 20, "seller_id": "user4_seller", "category_id": "cat4_jewelry", "image_urls": ["/images/prod4_earrings_1.jpg", "/images/prod4_earrings_2.jpg"], "status": "active"},
+     "prod5_inactive": {"id": "prod5_inactive", "title": "Inactive Item", "description": "Not available", "price": 10.00, "quantity": 0, "seller_id": "user2_seller", "category_id": "cat99_other", "image_urls": [], "status": "inactive"},
+}
 
-    def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+# Cart simulation: map user_id to a list of cart items {product_id: str, quantity: int}
+carts_db = {
+    "user1_cust": [{"product_id": "prod1_mug", "quantity": 1}, {"product_id": "prod2_scarf", "quantity": 2}]
+}
 
-    def check_password(self, password):
-        return check_password_hash(self.password_hash, password)
+# Order simulation: map order_id to order details
+# Example order data, simulating orders already created
+orders_db = {
+    "order_abc": {
+        "id": "order_abc",
+        "user_id": "user1_cust",
+        "order_date": "2023-10-25T10:00:00Z",
+        "total_amount": 105.00, # 25.00*1 + 35.00*2
+        "shipping_address": "123 Customer St, Anytown, CA 91234",
+        "status": "processing", # Example status
+        "payment_status": "paid",
+        "tracking_number": None,
+        "items": [
+            {"product_id": "prod1_mug", "quantity": 1, "price_at_purchase": 25.00, "seller_id": "user2_seller"},
+            {"product_id": "prod2_scarf", "quantity": 2, "price_at_purchase": 35.00, "seller_id": "user2_seller"}
+        ]
+    },
+     "order_def": {
+        "id": "order_def",
+        "user_id": "user5_cust",
+        "order_date": "2023-10-26T14:30:00Z",
+        "total_amount": 55.00,
+        "shipping_address": "456 Another Ave, Sometown, NY 56789",
+        "status": "shipped",
+        "payment_status": "paid",
+        "tracking_number": "TRACKXYZ789",
+        "items": [
+            {"product_id": "prod3_birdhouse", "quantity": 1, "price_at_purchase": 55.00, "seller_id": "user4_seller"}
+        ]
+    },
+     "order_ghi": { # Order with multiple sellers
+        "id": "order_ghi",
+        "user_id": "user1_cust",
+        "order_date": "2023-10-26T16:00:00Z",
+        "total_amount": 65.00, # 25 + 40
+        "shipping_address": "123 Customer St, Anytown, CA 91234",
+        "status": "processing",
+        "payment_status": "paid",
+        "tracking_number": None,
+        "items": [
+            {"product_id": "prod1_mug", "quantity": 1, "price_at_purchase": 25.00, "seller_id": "user2_seller"},
+            {"product_id": "prod4_earrings", "quantity": 1, "price_at_purchase": 40.00, "seller_id": "user4_seller"}
+        ]
+    },
+     "order_jkl": { # Pending payment order
+         "id": "order_jkl",
+         "user_id": "user5_cust",
+         "order_date": "2023-10-27T09:00:00Z",
+         "total_amount": 80.00, # 2 x prod4
+         "shipping_address": "456 Another Ave, Sometown, NY 56789",
+         "status": "pending_payment",
+         "payment_status": "pending",
+         "tracking_number": None,
+         "items": [
+            {"product_id": "prod4_earrings", "quantity": 2, "price_at_purchase": 40.00, "seller_id": "user4_seller"}
+         ]
+     }
+}
 
-class SellerProfile(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
-    shop_name = db.Column(db.String(120), nullable=False)
-    shop_description = db.Column(db.Text)
-    is_approved = db.Column(db.Boolean, default=False)
-    products = db.relationship('Product', backref='seller', lazy=True)
-    user = db.relationship('User', back_populates='seller_profile', uselist=False, foreign_keys=[user_id])
+reviews_db = {
+    "review1": {"id": "review1", "product_id": "prod1_mug", "user_id": "user1_cust", "rating": 5, "comment": "Love this mug, great quality!", "review_date": "2023-10-26T11:00:00Z"},
+     "review2": {"id": "review2", "product_id": "prod3_birdhouse", "user_id": "user5_cust", "rating": 4, "comment": "Beautiful craftsmanship.", "review_date": "2023-10-27T15:00:00Z"},
+}
 
-class Address(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    street = db.Column(db.String(200), nullable=False)
-    city = db.Column(db.String(100), nullable=False)
-    state = db.Column(db.String(100))
-    zip = db.Column(db.String(20))
-    country = db.Column(db.String(100), nullable=False)
-    is_default = db.Column(db.Boolean, default=False)
+# --- Helper Functions (Simulated Authentication & Roles) ---
+# Engineer 1 would implement robust versions of these using actual password hashing and database queries.
+# These helper functions would be defined by Engineer 1.
+def get_user_from_identity(identity):
+    """Retrieve user object from JWT identity."""
+    # In a real app, query the database: User.query.get(identity)
+    return users_db.get(identity)
 
-class Product(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    seller_id = db.Column(db.Integer, db.ForeignKey('seller_profile.id'), nullable=False)
-    name = db.Column(db.String(120), nullable=False)
-    description = db.Column(db.Text)
-    price = db.Column(db.Float, nullable=False)
-    stock = db.Column(db.Integer, default=0)
-    is_approved = db.Column(db.Boolean, default=False)
-    image_url = db.Column(db.String(255))
-    cart_items = db.relationship('CartItem', backref='product', lazy=True)
-    order_items = db.relationship('OrderItem', backref='product', lazy=True)
-    reviews = db.relationship('Review', backref='product', lazy=True)
+def customer_required(fn):
+    """Decorator to check if user is a customer."""
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+        current_user_id = get_jwt_identity()
+        user = get_user_from_identity(current_user_id)
+        if not user or user.get('role') != 'customer':
+            return jsonify({"msg": "Customers only!"}), 403
+        return fn(*args, **kwargs)
+    # Fix for Flask-JWT-Extended decorators on Flask 2.3+ if needed depending on Flask version
+    wrapper.__name__ = fn.__name__
+    return wrapper
 
-class CartItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    quantity = db.Column(db.Integer, default=1)
+def seller_required(fn):
+    """Decorator to check if user is a seller."""
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+        current_user_id = get_jwt_identity()
+        user = get_user_from_identity(current_user_id)
+        # Also check if the seller is approved if that flow exists
+        if not user or user.get('role') != 'seller' or not user.get('is_approved_seller', False):
+            return jsonify({"msg": "Sellers only or seller not approved!"}), 403
+        return fn(*args, **kwargs)
+    # Fix for Flask-JWT-Extended decorators on Flask 2.3+ if needed
+    wrapper.__name__ = fn.__name__
+    return wrapper
 
-class Order(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    shipping_address_id = db.Column(db.Integer, db.ForeignKey('address.id'), nullable=False)
-    total_amount = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(50), default='pending')
-    tracking_number = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    items = db.relationship('OrderItem', backref='order', lazy=True)
-    shipping_address = db.relationship('Address', backref='orders_as_shipping', lazy=True)
+def admin_required(fn):
+    """Decorator to check if user is an admin."""
+    @jwt_required()
+    def wrapper(*args, **kwargs):
+        current_user_id = get_jwt_identity()
+        user = get_user_from_identity(current_user_id)
+        if not user or user.get('role') != 'admin':
+            return jsonify({"msg": "Admins only!"}), 403
+        return fn(*args, **kwargs)
+    # Fix for Flask-JWT-Extended decorators on Flask 2.3+ if needed
+    wrapper.__name__ = fn.__name__
+    return wrapper
 
-class OrderItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
-    price_at_purchase = db.Column(db.Float, nullable=False)
-
-class Review(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    rating = db.Column(db.Integer, nullable=False)
-    comment = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-
-def authenticate_token(token):
-    user_id = tokens.get(token)
-    if user_id:
-        user = User.query.get(user_id)
-        return user
-    return None
-
-def generate_token(user_id):
-    token = secrets.token_hex(16)
-    tokens[token] = user_id
-    return token
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        auth_header = request.headers.get('Authorization')
-        if not auth_header:
-            return jsonify({"message": "Authorization header missing"}), 401
-        try:
-            scheme, token = auth_header.split()
-            if scheme.lower() != 'bearer':
-                return jsonify({"message": "Invalid authentication scheme"}), 401
-            user = authenticate_token(token)
-            if not user:
-                return jsonify({"message": "Invalid or expired token"}), 401
-            g.current_user = user
-        except ValueError:
-             return jsonify({"message": "Invalid Authorization header format"}), 401
-        return f(*args, **kwargs)
-    return decorated_function
-
-def role_required(required_role):
-    def decorator(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if g.current_user.role != required_role and g.current_user.role != 'admin':
-                 return jsonify({"message": "Unauthorized"}), 403
-            return f(*args, **kwargs)
-        return decorated_function
-    return decorator
-
-def admin_required(f):
-     return role_required('admin')(f)
-
-def seller_required(f):
-     return role_required('seller')(f)
-
-with app.app_context():
-    db.create_all()
-
-    if not User.query.filter_by(email='admin@example.com').first():
-        admin_user = User(email='admin@example.com', role='admin')
-        admin_user.set_password('adminpassword')
-        db.session.add(admin_user)
-        db.session.commit()
-
-    if not User.query.filter_by(email='seller@example.com').first():
-        seller_user = User(email='seller@example.com', role='seller')
-        seller_user.set_password('sellerpassword')
-        db.session.add(seller_user)
-        db.session.commit()
-        seller_profile = SellerProfile(user_id=seller_user.id, shop_name='Artisan Shop', shop_description='Handmade goods.', is_approved=True)
-        db.session.add(seller_profile)
-        db.session.commit()
-        if not Product.query.filter_by(seller_id=seller_profile.id).first():
-             product1 = Product(seller_id=seller_profile.id, name='Handmade Mug', description='A beautiful ceramic mug.', price=18.50, stock=10, is_approved=True, image_url='https://via.placeholder.com/180x120?text=Mug')
-             product2 = Product(seller_id=seller_profile.id, name='Wooden Coasters (Set of 4)', description='Set of 4 engraved wooden coasters.', price=25.00, stock=15, is_approved=True, image_url='https://via.placeholder.com/180x120?text=Coasters')
-             product3 = Product(seller_id=seller_profile.id, name='Knitted Scarf', description='Soft wool knitted scarf.', price=35.00, stock=5, is_approved=True, image_url='https://via.placeholder.com/180x120?text=Scarf')
-             db.session.add_all([product1, product2, product3])
-             db.session.commit()
-
-
-@app.route('/register', methods=['POST'])
-def register():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-    role = data.get('role', 'buyer')
-    if not email or not password:
-        return jsonify({"message": "Email and password are required"}), 400
-    if User.query.filter_by(email=email).first():
-        return jsonify({"message": "Email already exists"}), 409
-    user = User(email=email, role=role)
-    user.set_password(password)
-    db.session.add(user)
-    db.session.commit()
-    return jsonify({"message": "User registered successfully", "user_id": user.id}), 201
-
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
-    if not email or not password:
-        return jsonify({"message": "Email and password are required"}), 400
-    user = User.query.filter_by(email=email).first()
-    if user is None or not user.check_password(password):
-        return jsonify({"message": "Invalid credentials"}), 401
-    token = generate_token(user.id)
-    return jsonify({"token": token, "user_id": user.id, "role": user.role}), 200
-
-@app.route('/users/<int:user_id>', methods=['GET'])
-@login_required
-def get_user_profile(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"message": "User not found"}), 404
-    if g.current_user.id != user.id and g.current_user.role != 'admin':
-         return jsonify({"message": "Unauthorized"}), 403
-    seller_info = None
-    if user.role == 'seller' and user.seller_profile:
-        seller_info = {
-            "id": user.seller_profile.id,
-            "shop_name": user.seller_profile.shop_name,
-            "shop_description": user.seller_profile.shop_description,
-            "is_approved": user.seller_profile.is_approved
-        }
-    return jsonify({
-        "id": user.id,
-        "email": user.email,
-        "role": user.role,
-        "seller_profile": seller_info
-    }), 200
-
-@app.route('/users/<int:user_id>/addresses', methods=['GET'])
-@login_required
-def get_user_addresses(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"message": "User not found"}), 404
-    if g.current_user.id != user.id and g.current_user.role != 'admin':
-         return jsonify({"message": "Unauthorized"}), 403
-    addresses = Address.query.filter_by(user_id=user.id).all()
-    return jsonify([{
-        "id": addr.id,
-        "street": addr.street,
-        "city": addr.city,
-        "state": addr.state,
-        "zip": addr.zip,
-        "country": addr.country,
-        "is_default": addr.is_default
-    } for addr in addresses]), 200
-
-@app.route('/users/<int:user_id>/addresses', methods=['POST'])
-@login_required
-def add_user_address(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"message": "User not found"}), 404
-    if g.current_user.id != user.id:
-         return jsonify({"message": "Unauthorized"}), 403
-    data = request.get_json()
-    street = data.get('street')
-    city = data.get('city')
-    state = data.get('state')
-    zip = data.get('zip')
-    country = data.get('country')
-    if not street or not city or not country:
-         return jsonify({"message": "Street, city, and country are required"}), 400
-
-    # Make this the default if it's the first address
-    is_default = data.get('is_default', False)
-    if is_default:
-        current_default = Address.query.filter_by(user_id=user.id, is_default=True).first()
-        if current_default:
-            current_default.is_default = False
-
-    address = Address(user_id=user.id, street=street, city=city, state=state, zip=zip, country=country, is_default=is_default or not bool(Address.query.filter_by(user_id=user.id).first()))
-    db.session.add(address)
-    db.session.commit()
-    return jsonify({"message": "Address added", "address_id": address.id}), 201
-
-@app.route('/addresses/<int:address_id>', methods=['PUT'])
-@login_required
-def update_address(address_id):
-    address = Address.query.get(address_id)
-    if not address:
-        return jsonify({"message": "Address not found"}), 404
-    if address.user_id != g.current_user.id:
-        return jsonify({"message": "Unauthorized"}), 403
-    data = request.get_json()
-    address.street = data.get('street', address.street)
-    address.city = data.get('city', address.city)
-    address.state = data.get('state', address.state)
-    address.zip = data.get('zip', address.zip)
-    address.country = data.get('country', address.country)
-
-    is_default = data.get('is_default')
-    if is_default is not None and is_default:
-        current_default = Address.query.filter_by(user_id=g.current_user.id, is_default=True).first()
-        if current_default:
-            current_default.is_default = False
-        address.is_default = True
-    elif is_default is not None and not is_default and address.is_default:
-         # Prevent removing default if it's the only address
-         if Address.query.filter_by(user_id=g.current_user.id).count() > 1:
-             address.is_default = False
+# --- Helper Function for Email Notifications ---
+# Simulated email sending function (Engineer 3)
+def send_email_notification(recipient_email, subject, body):
+    """
+    Simulates sending an email.
+    In a real app, this would integrate with SendGrid, Mailgun, etc.
+    Engineer 3 would be responsible for this utility.
+    This helper function could be placed here or in a shared utilities section.
+    """
+    print(f"\n--- Simulating Email Notification ---")
+    print(f"To: {recipient_email}")
+    print(f"Subject: {subject}")
+    print(f"Body:\n{body}")
+    print(f"-------------------------------------\n")
+    # Real implementation would call an email service API
 
 
-    db.session.commit()
-    return jsonify({"message": "Address updated"}), 200
+# --- Backend Engineer 3 Assigned Endpoints & Logic ---
 
-@app.route('/addresses/<int:address_id>', methods=['DELETE'])
-@login_required
-def delete_address(address_id):
-    address = Address.query.get(address_id)
-    if not address:
-        return jsonify({"message": "Address not found"}), 404
-    if address.user_id != g.current_user.id:
-        return jsonify({"message": "Unauthorized"}), 403
-    if address.is_default and Address.query.filter_by(user_id=g.current_user.id).count() > 1:
-        return jsonify({"message": "Cannot delete default address if others exist. Set a new default first."}), 400
-
-    db.session.delete(address)
-    db.session.commit()
-    # If the deleted address was the only one, no default is needed. If others exist,
-    # and this wasn't the default (handled above), or this was the last one, it's fine.
-    if Address.query.filter_by(user_id=g.current_user.id, is_default=True).first() is None and \
-       Address.query.filter_by(user_id=g.current_user.id).first() is not None:
-           first_address = Address.query.filter_by(user_id=g.current_user.id).first()
-           first_address.is_default = True
-           db.session.commit()
-
-
-    return jsonify({"message": "Address deleted"}), 200
-
-
-@app.route('/products', methods=['GET'])
-def get_products():
-    products = Product.query.filter_by(is_approved=True).all()
-    return jsonify([{
-        "id": p.id,
-        "name": p.name,
-        "description": p.description,
-        "price": p.price,
-        "stock": p.stock,
-        "image_url": p.image_url,
-        "seller_id": p.seller_id,
-        "seller_shop_name": p.seller.shop_name if p.seller else None
-    } for p in products]), 200
-
-@app.route('/products/<int:product_id>', methods=['GET'])
-def get_product_detail(product_id):
-    product = Product.query.get(product_id)
-    if not product or not product.is_approved:
-        return jsonify({"message": "Product not found or not approved"}), 404
-
-    reviews = Review.query.filter_by(product_id=product.id).all()
-    review_list = [{
-        "id": r.id,
-        "rating": r.rating,
-        "comment": r.comment,
-        "user_email": r.user.email if r.user else 'Anonymous',
-        "created_at": r.created_at.isoformat()
-    } for r in reviews]
-
-    return jsonify({
-        "id": product.id,
-        "name": product.name,
-        "description": product.description,
-        "price": product.price,
-        "stock": product.stock,
-        "image_url": product.image_url,
-        "seller_id": product.seller_id,
-        "seller_shop_name": product.seller.shop_name if product.seller else None,
-        "reviews": review_list
-    }), 200
-
-@app.route('/products', methods=['POST'])
-@seller_required
-def create_product():
-    if not g.current_user.seller_profile or not g.current_user.seller_profile.is_approved:
-         return jsonify({"message": "User is not an approved seller"}), 403
-
-    data = request.get_json()
-    name = data.get('name')
-    description = data.get('description')
-    price = data.get('price')
-    stock = data.get('stock', 0)
-    image_url = data.get('image_url')
-
-    if not name or price is None:
-        return jsonify({"message": "Name and price are required"}), 400
-    try:
-        price = float(price)
-        stock = int(stock)
-    except (ValueError, TypeError):
-        return jsonify({"message": "Invalid price or stock format"}), 400
-
-    product = Product(
-        seller_id=g.current_user.seller_profile.id,
-        name=name,
-        description=description,
-        price=price,
-        stock=stock,
-        image_url=image_url,
-        is_approved=False # Requires admin approval
-    )
-    db.session.add(product)
-    db.session.commit()
-    return jsonify({"message": "Product created, awaiting admin approval", "product_id": product.id}), 201
-
-@app.route('/products/<int:product_id>', methods=['PUT'])
-@seller_required
-def update_product(product_id):
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"message": "Product not found"}), 404
-    if product.seller_id != g.current_user.seller_profile.id:
-         return jsonify({"message": "Unauthorized"}), 403
-
-    data = request.get_json()
-    product.name = data.get('name', product.name)
-    product.description = data.get('description', product.description)
-    product.price = data.get('price', product.price)
-    product.stock = data.get('stock', product.stock)
-    product.image_url = data.get('image_url', product.image_url)
-
-    # Update requires re-approval
-    product.is_approved = False
-
-    db.session.commit()
-    return jsonify({"message": "Product updated, re-awaiting admin approval"}), 200
-
-@app.route('/products/<int:product_id>', methods=['DELETE'])
-@seller_required
-def delete_product(product_id):
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"message": "Product not found"}), 404
-    if product.seller_id != g.current_user.seller_profile.id:
-         return jsonify({"message": "Unauthorized"}), 403
-
-    # Basic check: don't delete if in active carts or orders
-    if CartItem.query.filter_by(product_id=product.id).first() or \
-       OrderItem.query.filter_by(product_id=product.id).first():
-        return jsonify({"message": "Cannot delete product with associated cart items or orders"}), 400
-
-    db.session.delete(product)
-    db.session.commit()
-    return jsonify({"message": "Product deleted"}), 200
-
-@app.route('/cart', methods=['GET'])
-@login_required
+# Shopping Cart Endpoints (Engineer 3)
+@app.route('/api/cart', methods=['GET'])
+@jwt_required() # Assuming cart is tied to logged-in user for this demo
 def get_cart():
-    cart_items = CartItem.query.filter_by(user_id=g.current_user.id).all()
-    items_list = []
+    user_id = get_jwt_identity()
+    cart_items = carts_db.get(user_id, [])
+
+    detailed_cart = []
     for item in cart_items:
-        product = Product.query.get(item.product_id)
-        if product:
-            items_list.append({
-                "id": item.id,
-                "product_id": product.id,
-                "name": product.name,
-                "price": product.price,
-                "quantity": item.quantity,
-                "image_url": product.image_url
+        # Need to access products_db, which is a shared resource
+        product = products_db.get(item['product_id'])
+        if product and product.get('status') == 'active': # Only include active products
+            detailed_cart.append({
+                "product_id": product['id'],
+                "title": product['title'],
+                "price": product['price'],
+                "quantity": item['quantity'],
+                "image_url": product['image_urls'][0] if product['image_urls'] else None # Use first image
             })
-        else:
-             db.session.delete(item)
-             db.session.commit()
+        # Optionally, handle cases where product is inactive/deleted - maybe remove from cart?
+    return jsonify(detailed_cart), 200
 
-    return jsonify(items_list), 200
-
-@app.route('/cart/add', methods=['POST'])
-@login_required
+@app.route('/api/cart', methods=['POST'])
+@jwt_required()
 def add_to_cart():
+    user_id = get_jwt_identity()
     data = request.get_json()
     product_id = data.get('product_id')
     quantity = data.get('quantity', 1)
-    if not product_id or quantity <= 0:
-        return jsonify({"message": "Valid product_id and quantity required"}), 400
 
-    product = Product.query.get(product_id)
-    if not product or not product.is_approved:
-        return jsonify({"message": "Product not found or not approved"}), 404
-    if product.stock < quantity:
-        return jsonify({"message": f"Not enough stock. Only {product.stock} available."}), 400
+    if not product_id or not isinstance(quantity, int) or quantity <= 0:
+        return jsonify({"msg": "Invalid product ID or quantity"}), 400
 
-    cart_item = CartItem.query.filter_by(user_id=g.current_user.id, product_id=product_id).first()
-    if cart_item:
-        if product.stock < cart_item.quantity + quantity:
-             return jsonify({"message": f"Adding {quantity} exceeds stock. Only {product.stock - cart_item.quantity} more available."}), 400
-        cart_item.quantity += quantity
+    # Need to access products_db
+    product = products_db.get(product_id)
+    if not product or product.get('status') != 'active':
+        return jsonify({"msg": "Product not found or not available"}), 404
+
+    # Check stock *before* attempting to add/update
+    current_cart_quantity = next((item['quantity'] for item in carts_db.get(user_id, []) if item['product_id'] == product_id), 0)
+    if product['quantity'] < current_cart_quantity + quantity:
+        return jsonify({"msg": f"Insufficient stock. Adding {quantity} to current {current_cart_quantity} would exceed available {product['quantity']}."}), 400
+
+    # Initialize cart if it doesn't exist for the user
+    if user_id not in carts_db:
+        carts_db[user_id] = []
+
+    # Check if product is already in cart
+    cart_item_exists = False
+    for item in carts_db[user_id]:
+        if item['product_id'] == product_id:
+            # Update quantity
+            item['quantity'] += quantity
+            cart_item_exists = True
+            break
+
+    if not cart_item_exists:
+        # Add new item to cart
+        carts_db[user_id].append({"product_id": product_id, "quantity": quantity})
+
+    return jsonify({"msg": "Product added to cart"}), 200
+
+@app.route('/api/cart/<product_id>', methods=['PUT'])
+@jwt_required()
+def update_cart_item(product_id):
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    new_quantity = data.get('quantity')
+
+    if not isinstance(new_quantity, int) or new_quantity < 0:
+        return jsonify({"msg": "Invalid quantity"}), 400
+
+    cart_items = carts_db.get(user_id, [])
+    item_found = False
+    for item in cart_items:
+        if item['product_id'] == product_id:
+            item_found = True
+            if new_quantity == 0:
+                # Remove item if quantity is 0
+                carts_db[user_id].remove(item)
+                if not carts_db[user_id]:
+                    del carts_db[user_id] # Remove user entry if cart is empty
+                return jsonify({"msg": "Product removed from cart"}), 200
+            else:
+                # Check stock for new quantity
+                # Need to access products_db
+                product = products_db.get(product_id)
+                if not product or product.get('status') != 'active':
+                     return jsonify({"msg": "Product not found or not available"}), 404 # Product might have become inactive
+                if product['quantity'] < new_quantity:
+                    return jsonify({"msg": f"Insufficient stock. Only {product['quantity']} available for '{product['title']}'"}), 400
+
+                item['quantity'] = new_quantity
+                return jsonify({"msg": "Cart updated"}), 200
+
+    if not item_found:
+         return jsonify({"msg": "Product not found in cart"}), 404
+
+@app.route('/api/cart/<product_id>', methods=['DELETE'])
+@jwt_required()
+def remove_from_cart(product_id):
+    user_id = get_jwt_identity()
+    cart_items = carts_db.get(user_id, [])
+    item_to_remove = None
+    for item in cart_items:
+        if item['product_id'] == product_id:
+            item_to_remove = item
+            break
+
+    if item_to_remove:
+        carts_db[user_id].remove(item_to_remove)
+        if not carts_db[user_id]:
+            del carts_db[user_id] # Remove user entry if cart is empty
+        return jsonify({"msg": "Product removed from cart"}), 200
     else:
-        cart_item = CartItem(user_id=g.current_user.id, product_id=product_id, quantity=quantity)
-        db.session.add(cart_item)
+        return jsonify({"msg": "Product not found in cart"}), 404
 
-    db.session.commit()
-    return jsonify({"message": "Item added to cart"}), 200
 
-@app.route('/cart/update/<int:item_id>', methods=['PUT'])
-@login_required
-def update_cart_item(item_id):
-    data = request.get_json()
-    quantity = data.get('quantity')
-    if quantity is None or quantity <= 0:
-        return jsonify({"message": "Valid quantity required"}), 400
+# Order Creation & Payment Endpoints (Engineer 3)
 
-    cart_item = CartItem.query.filter_by(id=item_id, user_id=g.current_user.id).first()
-    if not cart_item:
-        return jsonify({"message": "Cart item not found"}), 404
-
-    product = Product.query.get(cart_item.product_id)
-    if not product:
-         db.session.delete(cart_item)
-         db.session.commit()
-         return jsonify({"message": "Product for this cart item not found or removed, item deleted"}), 404
-
-    if product.stock < quantity:
-        return jsonify({"message": f"Not enough stock. Only {product.stock} available."}), 400
-
-    cart_item.quantity = quantity
-    db.session.commit()
-    return jsonify({"message": "Cart item updated"}), 200
-
-@app.route('/cart/remove/<int:item_id>', methods=['DELETE'])
-@login_required
-def remove_cart_item(item_id):
-    cart_item = CartItem.query.filter_by(id=item_id, user_id=g.current_user.id).first()
-    if not cart_item:
-        return jsonify({"message": "Cart item not found"}), 404
-    db.session.delete(cart_item)
-    db.session.commit()
-    return jsonify({"message": "Cart item removed"}), 200
-
-@app.route('/orders', methods=['POST'])
-@login_required
+@app.route('/api/checkout/create-order', methods=['POST'])
+@customer_required
 def create_order():
+    user_id = get_jwt_identity()
+    user = users_db.get(user_id) # Need to access users_db
+
     data = request.get_json()
-    shipping_address_id = data.get('shipping_address_id')
-    if not shipping_address_id:
-        return jsonify({"message": "Shipping address is required"}), 400
+    shipping_address = data.get('shipping_address')
 
-    shipping_address = Address.query.filter_by(id=shipping_address_id, user_id=g.current_user.id).first()
     if not shipping_address:
-        return jsonify({"message": "Shipping address not found or does not belong to user"}), 404
+        # Attempt to use profile address if available
+        shipping_address = user['profile'].get('shipping_address')
+        if not shipping_address:
+            return jsonify({"msg": "Shipping address is required"}), 400
 
-    cart_items = CartItem.query.filter_by(user_id=g.current_user.id).all()
+    cart_items = carts_db.get(user_id, [])
     if not cart_items:
-        return jsonify({"message": "Cart is empty"}), 400
+        return jsonify({"msg": "Cart is empty"}), 400
 
+    order_items_list = []
     total_amount = 0
-    order_items_to_add = []
-    products_to_update = {}
+    inventory_updates = {} # To track changes before committing
 
-    for item in cart_items:
-        product = Product.query.get(item.product_id)
-        if not product or not product.is_approved or product.stock < item.quantity:
-            db.session.delete(item)
-            db.session.commit()
-            return jsonify({"message": f"Product '{product.name if product else item.product_id}' unavailable or not enough stock. Please review cart."}), 400
-        order_items_to_add.append(OrderItem(
-            product_id=product.id,
-            quantity=item.quantity,
-            price_at_purchase=product.price
-        ))
-        total_amount += product.price * item.quantity
-        if product.id not in products_to_update:
-            products_to_update[product.id] = product
-        products_to_update[product.id].stock -= item.quantity
+    # Validate cart items, calculate total, and prepare inventory updates
+    # --- Simulate Transaction Start --- (Conceptual in memory)
+    try:
+        for item in cart_items:
+            product_id = item['product_id']
+            quantity = item['quantity']
+            product = products_db.get(product_id) # Need to access products_db
 
-    new_order = Order(
-        user_id=g.current_user.id,
-        shipping_address_id=shipping_address.id,
-        total_amount=total_amount,
-        status='pending', # Or 'processing' after payment sim
-        created_at=datetime.utcnow()
-    )
-    db.session.add(new_order)
-    db.session.flush() # Assigns ID to new_order
+            if not product or product.get('status') != 'active':
+                return jsonify({"msg": f"Product '{product.get('title', product_id)}' is no longer available."}), 400
+            if product['quantity'] < quantity:
+                return jsonify({"msg": f"Insufficient stock for '{product['title']}'. Only {product['quantity']} available."}), 400
 
-    for item in order_items_to_add:
-        item.order_id = new_order.id
-        db.session.add(item)
-
-    # Simulate payment success
-    new_order.status = 'processing'
-
-    # Clear cart
-    for item in cart_items:
-        db.session.delete(item)
-
-    db.session.commit()
-    return jsonify({"message": "Order created successfully", "order_id": new_order.id, "status": new_order.status}), 201
-
-@app.route('/users/<int:user_id>/orders', methods=['GET'])
-@login_required
-def get_user_orders(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"message": "User not found"}), 404
-    if g.current_user.id != user.id and g.current_user.role != 'admin':
-         return jsonify({"message": "Unauthorized"}), 403
-
-    orders = Order.query.filter_by(user_id=user.id).all()
-    orders_list = []
-    for order in orders:
-        items_list = []
-        for item in order.items:
-            product = Product.query.get(item.product_id)
-            items_list.append({
-                "product_id": item.product_id,
-                "product_name": product.name if product else 'Unknown Product',
-                "quantity": item.quantity,
-                "price_at_purchase": item.price_at_purchase,
-                "image_url": product.image_url if product else None
+            item_price = product['price']
+            order_items_list.append({
+                "product_id": product_id,
+                "quantity": quantity,
+                "price_at_purchase": item_price,
+                "seller_id": product['seller_id'] # Store seller_id with item for easy lookup later (Access products_db)
             })
-        orders_list.append({
-            "id": order.id,
-            "total_amount": order.total_amount,
-            "status": order.status,
-            "tracking_number": order.tracking_number,
-            "created_at": order.created_at.isoformat(),
-            "items": items_list
+            total_amount += item_price * quantity
+            inventory_updates[product_id] = product['quantity'] - quantity
+
+        if not order_items_list:
+             return jsonify({"msg": "No valid items in cart"}), 400
+
+        # Apply inventory updates (Conceptual)
+        for product_id, new_quantity in inventory_updates.items():
+            products_db[product_id]['quantity'] = new_quantity # Update products_db
+
+        # Create the order
+        order_id = str(uuid.uuid4()) # Generate unique ID
+        new_order = {
+            "id": order_id,
+            "user_id": user_id,
+            "order_date": datetime.utcnow().isoformat() + 'Z', # Use actual timestamp
+            "total_amount": total_amount,
+            "shipping_address": shipping_address,
+            "status": "pending_payment", # Set status indicating waiting for payment
+            "payment_status": "pending",
+            "tracking_number": None,
+            "items": order_items_list
+        }
+        orders_db[order_id] = new_order # Update orders_db
+
+        # Clear the user's cart after order creation
+        if user_id in carts_db:
+             del carts_db[user_id] # Update carts_db
+
+        # --- Simulate Transaction Commit ---
+        return jsonify({"msg": "Order created successfully, proceed to payment", "order_id": order_id, "total_amount": total_amount}), 201
+
+    except Exception as e:
+        # --- Simulate Transaction Rollback ---
+        # In a real DB, rollback changes.
+        print(f"Error during order creation: {e}. Simulating rollback.")
+        return jsonify({"msg": "Failed to create order", "error": str(e)}), 500
+
+
+@app.route('/api/checkout/initiate-payment', methods=['POST'])
+@customer_required
+def initiate_payment():
+    user_id = get_jwt_identity()
+    data = request.get_json()
+    order_id = data.get('order_id')
+
+    order = orders_db.get(order_id) # Access orders_db
+
+    if not order or order['user_id'] != user_id:
+        return jsonify({"msg": "Order not found or does not belong to user"}), 404
+
+    if order['payment_status'] != 'pending' or order['status'] != 'pending_payment':
+        return jsonify({"msg": "Payment for this order is already processed or is not pending"}), 400
+
+    # --- Simulate Payment Gateway Interaction ---
+    try:
+        # In a real app, call payment gateway API (e.g., Stripe, PayPal)
+        # Simulate success response from payment gateway
+        simulated_payment_intent_id = f"pi_{str(uuid.uuid4())[:8]}"
+        simulated_client_secret = f"sec_{str(uuid.uuid4())[:8]}_test"
+
+        # Store payment intent ID with the order (optional but good practice)
+        order['payment_intent_id'] = simulated_payment_intent_id # Update orders_db
+
+        return jsonify({
+            "msg": "Payment initiated",
+            "payment_intent_id": simulated_payment_intent_id,
+            "client_secret": simulated_client_secret
+        }), 200
+
+    except Exception as e:
+        print(f"Simulated Payment Initiation Failed: {e}")
+        return jsonify({"msg": "Failed to initiate payment", "error": str(e)}), 500
+
+
+@app.route('/api/checkout/payment-webhook', methods=['POST'])
+# No authentication required for webhooks, secured by verifying signature (simulated)
+def payment_webhook():
+    # In a real app: Verify signature, parse event, handle types.
+    # We will expect a simple JSON payload containing an order_id or payment_intent_id for this sim.
+    try:
+        event_data = request.get_json()
+        simulated_payment_success = event_data.get('type') == 'payment_intent.succeeded' # Simulate event type
+
+        if not simulated_payment_success:
+             return jsonify({"msg": "Event type ignored"}), 200
+
+        # Simulate extracting the order_id or payment_intent_id from the payload
+        order_id_from_webhook = event_data.get('data', {}).get('object', {}).get('metadata', {}).get('order_id')
+        simulated_payment_intent_id = event_data.get('data', {}).get('object', {}).get('id')
+
+        order = None
+        if order_id_from_webhook:
+            order = orders_db.get(order_id_from_webhook) # Access orders_db
+        elif simulated_payment_intent_id:
+             order = next((o for o in orders_db.values() if o.get('payment_intent_id') == simulated_payment_intent_id), None) # Access orders_db
+
+
+        if not order:
+            return jsonify({"msg": "Order not found"}), 404
+
+        if order['payment_status'] == 'paid':
+            return jsonify({"msg": "Order already paid"}), 200 # Idempotent handling
+
+        # --- Simulate Transaction Start ---
+        try:
+            # Update order status
+            order['payment_status'] = 'paid' # Update orders_db
+            order['status'] = 'processing' # Move from pending_payment to processing (Update orders_db)
+
+            # Trigger Order Confirmation Email
+            user = users_db.get(order['user_id']) # Access users_db
+            if user:
+                order_summary_lines = [f"- {item['quantity']} x {products_db.get(item['product_id'],{}).get('title','Unknown Item')} @ ${item['price_at_purchase']:.2f} each" for item in order['items']] # Access products_db
+                order_summary = "\n".join(order_summary_lines)
+
+                send_email_notification(
+                    recipient_email=user['email'],
+                    subject=f"Your Order #{order['id']} Confirmed!",
+                    body=f"Thank you for your order! Your order #{order['id']} has been confirmed and is now being processed.\n\n"
+                         f"Shipping Address:\n{order['shipping_address']}\n\n"
+                         f"Order Summary:\n{order_summary}\n\n"
+                         f"Total: ${order['total_amount']:.2f}\n\n"
+                         f"You can view your order details here: [Link to Order History]" # Placeholder link
+                )
+
+            # --- Simulate Transaction Commit ---
+            return jsonify({"msg": "Webhook received and processed successfully"}), 200
+
+        except Exception as e:
+            # --- Simulate Transaction Rollback ---
+            # In a real DB, rollback changes.
+            print(f"Webhook Error processing event and updating DB: {e}. Simulating rollback.")
+            return jsonify({"msg": "Error processing webhook"}), 500 # Return 500 for retries
+
+
+    except Exception as e:
+        print(f"Webhook Error parsing request or finding order: {e}")
+        return jsonify({"msg": "Error processing webhook request"}), 400
+
+
+# Customer Order History Endpoints (Engineer 3)
+
+@app.route('/api/customer/orders', methods=['GET'])
+@customer_required
+def get_customer_orders():
+    user_id = get_jwt_identity()
+    customer_orders = [order for order in orders_db.values() if order['user_id'] == user_id] # Access orders_db
+
+    # Format orders for response
+    formatted_orders = []
+    for order in customer_orders:
+        formatted_orders.append({
+            "order_id": order['id'],
+            "order_date": order['order_date'],
+            "total_amount": order['total_amount'],
+            "status": order['status'],
+            "payment_status": order['payment_status'],
+            "item_count": sum(item['quantity'] for item in order['items']),
+             "preview_items": [ # Include a few item titles for preview
+                 products_db.get(item['product_id'],{}).get('title','?') # Access products_db
+                 for item in order['items'][:2] # Take first 2 items
+             ],
+             "has_tracking": order.get('tracking_number') is not None
         })
-    return jsonify(orders_list), 200
 
-@app.route('/orders/<int:order_id>', methods=['GET'])
-@login_required
-def get_order_detail(order_id):
-    order = Order.query.get(order_id)
-    if not order:
-        return jsonify({"message": "Order not found"}), 404
+    # Sort by date, newest first
+    formatted_orders.sort(key=lambda x: x['order_date'], reverse=True)
 
-    # Check if user is the buyer, a seller of items in the order, or an admin
-    is_buyer = order.user_id == g.current_user.id
-    is_seller = False
-    if g.current_user.role == 'seller' and g.current_user.seller_profile:
-         seller_product_ids = [p.id for p in Product.query.filter_by(seller_id=g.current_user.seller_profile.id).all()]
-         for item in order.items:
-             if item.product_id in seller_product_ids:
-                 is_seller = True
-                 break
-    is_admin = g.current_user.role == 'admin'
+    return jsonify(formatted_orders), 200
 
-    if not is_buyer and not is_seller and not is_admin:
-        return jsonify({"message": "Unauthorized"}), 403
+@app.route('/api/customer/orders/<order_id>', methods=['GET'])
+@customer_required
+def get_customer_order_details(order_id):
+    user_id = get_jwt_identity()
+    order = orders_db.get(order_id) # Access orders_db
 
-    items_list = []
-    for item in order.items:
-        product = Product.query.get(item.product_id)
-        items_list.append({
-            "product_id": item.product_id,
-            "product_name": product.name if product else 'Unknown Product',
-            "quantity": item.quantity,
-            "price_at_purchase": item.price_at_purchase,
-            "image_url": product.image_url if product else None,
-            "seller_id": product.seller_id if product else None
-        })
+    # Ensure the order exists and belongs to the logged-in customer
+    if not order or order['user_id'] != user_id:
+        return jsonify({"msg": "Order not found or does not belong to this customer"}), 404
 
-    shipping_addr = order.shipping_address
-    shipping_address_detail = {
-        "street": shipping_addr.street,
-        "city": shipping_addr.city,
-        "state": shipping_addr.state,
-        "zip": shipping_addr.zip,
-        "country": shipping_addr.country,
-    } if shipping_addr else None
+    # Fetch product details for order items
+    detailed_items = []
+    for item in order['items']:
+         product = products_db.get(item['product_id']) # Access products_db
+         detailed_items.append({
+             "product_id": item['product_id'],
+             "title": product['title'] if product else 'Unknown Product',
+             "quantity": item['quantity'],
+             "price_at_purchase": item['price_at_purchase'],
+             "image_url": product['image_urls'][0] if product and product['image_urls'] else None
+         })
+
+    # Format the order details for response
+    order_details = {
+        "order_id": order['id'],
+        "order_date": order['order_date'],
+        "total_amount": order['total_amount'],
+        "shipping_address": order['shipping_address'],
+        "status": order['status'],
+        "payment_status": order['payment_status'],
+        "tracking_number": order.get('tracking_number'), # Include tracking if exists
+        "items": detailed_items
+    }
+
+    return jsonify(order_details), 200
+
+# Product Reviews & Ratings Endpoints (Engineer 3)
+
+@app.route('/api/products/<product_id>/reviews', methods=['GET'])
+def get_product_reviews(product_id):
+    # Authentication not strictly required for *viewing* reviews
+    product = products_db.get(product_id) # Access products_db
+    if not product or product.get('status') != 'active':
+        return jsonify({"msg": "Product not found or not available for review"}), 404
+
+    product_reviews = [
+        {
+            "id": review_id,
+            "user_id": review['user_id'],
+            "rating": review['rating'],
+            "comment": review['comment'],
+            "review_date": review['review_date'],
+            "customer_name": users_db.get(review['user_id'], {}).get('profile', {}).get('name', 'Anonymous User') # Get reviewer name (Access users_db)
+        }
+        for review_id, review in reviews_db.items() if review['product_id'] == product_id # Access reviews_db
+    ]
+
+    # Sort by date, newest first
+    product_reviews.sort(key=lambda x: x['review_date'], reverse=True)
+
+    return jsonify(product_reviews), 200
 
 
-    return jsonify({
-        "id": order.id,
-        "user_id": order.user_id,
-        "user_email": order.buyer.email if order.buyer else 'Unknown User',
-        "shipping_address": shipping_address_detail,
-        "total_amount": order.total_amount,
-        "status": order.status,
-        "tracking_number": order.tracking_number,
-        "created_at": order.created_at.isoformat(),
-        "updated_at": order.updated_at.isoformat(),
-        "items": items_list
-    }), 200
-
-@app.route('/orders/<int:order_id>/status', methods=['PUT'])
-@seller_required
-def update_order_status(order_id):
-     order = Order.query.get(order_id)
-     if not order:
-         return jsonify({"message": "Order not found"}), 404
-
-     # Check if the seller sells *any* product in this order
-     is_seller_of_this_order = False
-     if g.current_user.seller_profile:
-        seller_product_ids = [p.id for p in Product.query.filter_by(seller_id=g.current_user.seller_profile.id).all()]
-        for item in order.items:
-            if item.product_id in seller_product_ids:
-                is_seller_of_this_order = True
-                break
-
-     if not is_seller_of_this_order and g.current_user.role != 'admin':
-          return jsonify({"message": "Unauthorized"}), 403
-
-     data = request.get_json()
-     new_status = data.get('status')
-     valid_statuses = ['pending', 'processing', 'shipped', 'completed', 'cancelled']
-     if new_status not in valid_statuses:
-          return jsonify({"message": f"Invalid status. Must be one of: {', '.join(valid_statuses)}"}), 400
-
-     order.status = new_status
-     order.updated_at = datetime.utcnow()
-     db.session.commit()
-     return jsonify({"message": "Order status updated", "order_id": order.id, "status": order.status}), 200
-
-@app.route('/orders/<int:order_id>/tracking', methods=['PUT'])
-@seller_required
-def add_order_tracking(order_id):
-     order = Order.query.get(order_id)
-     if not order:
-         return jsonify({"message": "Order not found"}), 404
-
-     # Check if the seller sells *any* product in this order
-     is_seller_of_this_order = False
-     if g.current_user.seller_profile:
-        seller_product_ids = [p.id for p in Product.query.filter_by(seller_id=g.current_user.seller_profile.id).all()]
-        for item in order.items:
-            if item.product_id in seller_product_ids:
-                is_seller_of_this_order = True
-                break
-
-     if not is_seller_of_this_order and g.current_user.role != 'admin':
-          return jsonify({"message": "Unauthorized"}), 403
-
-     data = request.get_json()
-     tracking_number = data.get('tracking_number')
-
-     order.tracking_number = tracking_number
-     order.updated_at = datetime.utcnow()
-     # Automatically set status to shipped if tracking is added and status is processing/pending
-     if tracking_number and order.status in ['pending', 'processing']:
-         order.status = 'shipped'
-     db.session.commit()
-     return jsonify({"message": "Order tracking updated", "order_id": order.id, "tracking_number": order.tracking_number}), 200
-
-@app.route('/products/<int:product_id>/reviews', methods=['POST'])
-@login_required
-def add_review(product_id):
-    if g.current_user.role != 'buyer':
-        return jsonify({"message": "Only buyers can leave reviews"}), 403
-
-    product = Product.query.get(product_id)
-    if not product or not product.is_approved:
-        return jsonify({"message": "Product not found or not approved"}), 404
-
-    # Check if the buyer has purchased this product
-    has_purchased = OrderItem.query.join(Order).\
-        filter(Order.user_id == g.current_user.id, OrderItem.product_id == product.id).\
-        count() > 0
-
-    if not has_purchased:
-         return jsonify({"message": "You can only review products you have purchased"}), 403
+@app.route('/api/products/<product_id>/reviews', methods=['POST'])
+@customer_required # Only logged-in customers can leave reviews
+def submit_product_review(product_id):
+    user_id = get_jwt_identity()
+    product = products_db.get(product_id) # Access products_db
+    if not product or product.get('status') != 'active':
+        return jsonify({"msg": "Product not found or not active"}), 404
 
     data = request.get_json()
     rating = data.get('rating')
-    comment = data.get('comment')
+    comment = data.get('comment', '').strip() # Allow empty comments, strip whitespace
 
-    if rating is None or not (1 <= int(rating) <= 5):
-        return jsonify({"message": "Rating must be an integer between 1 and 5"}), 400
+    # Validate input
+    if not isinstance(rating, int) or not 1 <= rating <= 5:
+        return jsonify({"msg": "Rating must be an integer between 1 and 5"}), 400
 
-    existing_review = Review.query.filter_by(user_id=g.current_user.id, product_id=product_id).first()
-    if existing_review:
-         return jsonify({"message": "You have already reviewed this product"}), 409
+    # --- Check if user has purchased the product (Crucial Business Logic) ---
+    # In a real app, query orders_db and order_items_db using SQLAlchemy/ORM
+    has_purchased = False
+    for order in orders_db.values(): # Access orders_db
+        if order['user_id'] == user_id and order['status'] in ['delivered', 'completed', 'shipped']: # Allow review after shipped or delivered/completed
+            for item in order['items']:
+                if item['product_id'] == product_id:
+                    has_purchased = True
+                    break
+        if has_purchased:
+            break # Found purchase, no need to check further orders
 
-    review = Review(
-        product_id=product_id,
-        user_id=g.current_user.id,
-        rating=int(rating),
-        comment=comment,
-        created_at=datetime.utcnow()
-    )
-    db.session.add(review)
-    db.session.commit()
-    return jsonify({"message": "Review added", "review_id": review.id}), 201
+    if not has_purchased:
+         return jsonify({"msg": "You can only review products you have purchased"}), 403 # Forbidden
 
-@app.route('/products/<int:product_id>/reviews', methods=['GET'])
-def get_product_reviews(product_id):
-    product = Product.query.get(product_id)
-    if not product or not product.is_approved:
-        return jsonify({"message": "Product not found or not approved"}), 404
-    reviews = Review.query.filter_by(product_id=product_id).all()
-    return jsonify([{
-        "id": r.id,
-        "rating": r.rating,
-        "comment": r.comment,
-        "user_email": r.user.email if r.user else 'Anonymous',
-        "created_at": r.created_at.isoformat()
-    } for r in reviews]), 200
+    # Check if user has already reviewed this product (Optional, but common)
+    # For this sim, we'll allow multiple reviews for simplicity, but a real app might disallow.
+    # existing_review = next((r for r in reviews_db.values() if r['product_id'] == product_id and r['user_id'] == user_id), None)
+    # if existing_review:
+    #     return jsonify({"msg": "You have already reviewed this product"}), 409 # Conflict
 
-@app.route('/seller/apply', methods=['POST'])
-@login_required
-def apply_seller():
-    if g.current_user.role != 'buyer':
-        return jsonify({"message": "Only existing buyers can apply to be sellers"}), 400
-    if g.current_user.seller_profile:
-        return jsonify({"message": "User already has a seller profile"}), 409
+    # Create the review
+    review_id = str(uuid.uuid4())
+    new_review = {
+        "id": review_id,
+        "product_id": product_id,
+        "user_id": user_id,
+        "rating": rating,
+        "comment": comment,
+        "review_date": datetime.utcnow().isoformat() + 'Z' # Use actual timestamp
+    }
+    reviews_db[review_id] = new_review # Update reviews_db
 
-    data = request.get_json()
-    shop_name = data.get('shop_name')
-    shop_description = data.get('shop_description')
-    if not shop_name:
-        return jsonify({"message": "Shop name is required"}), 400
+    # In a real app, you might trigger a recalculation of the product's average rating (async task).
 
-    seller_profile = SellerProfile(
-        user_id=g.current_user.id,
-        shop_name=shop_name,
-        shop_description=shop_description,
-        is_approved=False # Requires admin approval
-    )
-    db.session.add(seller_profile)
-    g.current_user.role = 'seller' # Temporarily change role, approval needed
-    g.current_user.seller_profile = seller_profile
-    db.session.commit()
-    return jsonify({"message": "Seller application submitted, awaiting admin approval", "seller_profile_id": seller_profile.id}), 201
+    return jsonify({"msg": "Review submitted successfully", "review_id": review_id}), 201
 
-@app.route('/seller/me', methods=['GET'])
-@seller_required
-def get_my_seller_profile():
-    seller_profile = g.current_user.seller_profile
-    if not seller_profile:
-         return jsonify({"message": "Seller profile not found"}), 404
-    return jsonify({
-        "id": seller_profile.id,
-        "user_id": seller_profile.user_id,
-        "shop_name": seller_profile.shop_name,
-        "shop_description": seller_profile.shop_description,
-        "is_approved": seller_profile.is_approved
-    }), 200
 
-@app.route('/seller/me', methods=['PUT'])
-@seller_required
-def update_my_seller_profile():
-    seller_profile = g.current_user.seller_profile
-    if not seller_profile:
-         return jsonify({"message": "Seller profile not found"}), 404
-    data = request.get_json()
-    seller_profile.shop_name = data.get('shop_name', seller_profile.shop_name)
-    seller_profile.shop_description = data.get('shop_description', seller_profile.shop_description)
-    db.session.commit()
-    return jsonify({"message": "Seller profile updated"}), 200
+# Seller Order Management Endpoints (Engineer 3)
 
-@app.route('/seller/<int:seller_id>/products', methods=['GET'])
-def get_seller_products(seller_id):
-    seller = SellerProfile.query.get(seller_id)
-    if not seller or not seller.is_approved:
-        return jsonify({"message": "Seller not found or not approved"}), 404
-    products = Product.query.filter_by(seller_id=seller_id, is_approved=True).all()
-    return jsonify([{
-        "id": p.id,
-        "name": p.name,
-        "description": p.description,
-        "price": p.price,
-        "stock": p.stock,
-        "image_url": p.image_url,
-        "seller_id": p.seller_id,
-        "seller_shop_name": p.seller.shop_name if p.seller else None
-    } for p in products]), 200
-
-@app.route('/seller/me/orders', methods=['GET'])
+@app.route('/api/seller/orders', methods=['GET'])
 @seller_required
 def get_seller_orders():
-    if not g.current_user.seller_profile or not g.current_user.seller_profile.is_approved:
-         return jsonify({"message": "User is not an approved seller"}), 403
+    user_id = get_jwt_identity() # This is the seller_id
+    seller_orders_overview = []
+    processed_order_ids = set() # Use a set to avoid adding the same order multiple times
 
-    seller_product_ids = [p.id for p in Product.query.filter_by(seller_id=g.current_user.seller_profile.id).all()]
+    # Iterate through all orders
+    for order_id, order in orders_db.items(): # Access orders_db
+        if order_id in processed_order_ids:
+             continue # Skip if already processed
 
-    # Find all order items belonging to the seller's products
-    seller_order_items = OrderItem.query.filter(OrderItem.product_id.in_(seller_product_ids)).all()
+        # Check if *any* item in the order belongs to this seller
+        contains_seller_products = False
+        seller_items_count = 0
+        total_for_seller_in_order = 0
+        item_summaries = [] # To list seller's items in this order overview
 
-    # Get unique order IDs from these items
-    order_ids = list(set(item.order_id for item in seller_order_items))
+        for item in order['items']:
+            # Lookup if not stored with item (more robust if product data changes)
+            item_product = products_db.get(item['product_id']) # Access products_db
+            item_seller_id = item_product.get('seller_id') if item_product else None
 
-    # Fetch these orders
-    orders = Order.query.filter(Order.id.in_(order_ids)).all()
+            if item_seller_id == user_id:
+                contains_seller_products = True
+                seller_items_count += item['quantity']
+                total_for_seller_in_order += item['quantity'] * item['price_at_purchase']
+                item_summaries.append(f"{item['quantity']}x {item_product.get('title','?') if item_product else '?'}")
 
-    orders_list = []
-    for order in orders:
-        # Filter order items to only include this seller's products
-        seller_items_in_order = [item for item in order.items if item.product_id in seller_product_ids]
-        items_list = []
-        for item in seller_items_in_order:
-             product = Product.query.get(item.product_id)
-             items_list.append({
-                "product_id": item.product_id,
-                "product_name": product.name if product else 'Unknown Product',
-                "quantity": item.quantity,
-                "price_at_purchase": item.price_at_purchase
+        # If the order contains products from this seller, add its overview
+        if contains_seller_products:
+            customer_name = users_db.get(order['user_id'], {}).get('profile', {}).get('name', 'Unknown Customer') # Access users_db
+            seller_orders_overview.append({
+                "order_id": order_id,
+                "customer_name": customer_name,
+                "order_date": order['order_date'],
+                "status": order['status'], # Show the overall order status
+                "payment_status": order['payment_status'], # Show overall payment status
+                "seller_item_count": seller_items_count,
+                "seller_order_total": total_for_seller_in_order, # Total amount specifically for this seller's items
+                "seller_items_summary": ", ".join(item_summaries),
+                 "has_tracking": order.get('tracking_number') is not None # Does the overall order have tracking?
             })
+            processed_order_ids.add(order_id)
 
-        orders_list.append({
-            "id": order.id,
-            "buyer_user_id": order.user_id,
-            "buyer_email": order.buyer.email if order.buyer else 'Unknown Buyer',
-            "status": order.status,
-            "tracking_number": order.tracking_number,
-            "created_at": order.created_at.isoformat(),
-            "seller_items_in_order": items_list # Only items from this seller
-        })
-    return jsonify(orders_list), 200
 
-@app.route('/seller/payout/request', methods=['POST'])
+    # Sort by date, newest first
+    seller_orders_overview.sort(key=lambda x: x['order_date'], reverse=True)
+
+    return jsonify(seller_orders_overview), 200
+
+
+@app.route('/api/seller/orders/<order_id>', methods=['GET'])
 @seller_required
-def request_payout():
-     if not g.current_user.seller_profile or not g.current_user.seller_profile.is_approved:
-         return jsonify({"message": "User is not an approved seller"}), 403
+def get_seller_order_details(order_id):
+    user_id = get_jwt_identity() # This is the seller_id
+    order = orders_db.get(order_id) # Access orders_db
 
-     # Placeholder: Simulate payout request
-     # In a real app, this would involve calculating earnings, interacting with a payout service (like Stripe Connect), etc.
-     return jsonify({"message": "Payout request submitted (simulated)"}), 200
+    # Ensure the order exists
+    if not order:
+        return jsonify({"msg": "Order not found"}), 404
 
-@app.route('/admin/users', methods=['GET'])
-@admin_required
-def admin_list_users():
-    users = User.query.all()
-    users_list = []
-    for user in users:
-         seller_info = None
-         if user.role == 'seller' and user.seller_profile:
-             seller_info = {
-                "id": user.seller_profile.id,
-                "shop_name": user.seller_profile.shop_name,
-                "is_approved": user.seller_profile.is_approved
-            }
-         users_list.append({
-             "id": user.id,
-             "email": user.email,
-             "role": user.role,
-             "seller_profile": seller_info
+    # Check if the order contains any items from the logged-in seller
+    seller_specific_items = []
+    total_for_seller = 0
+    for item in order['items']:
+        # Lookup if not stored with item (more robust if product data changes)
+        item_product = products_db.get(item['product_id']) # Access products_db
+        item_seller_id = item_product.get('seller_id') if item_product else None
+
+        if item_seller_id == user_id:
+            seller_specific_items.append(item)
+            total_for_seller += item['quantity'] * item['price_at_purchase']
+
+
+    if not seller_specific_items:
+         # If the order exists but has no items from *this* seller, it's a permission issue.
+         return jsonify({"msg": "You do not have permission to view details for this order"}), 403
+
+    # Fetch product details for seller's items in this order
+    detailed_seller_items = []
+    for item in seller_specific_items:
+         product = products_db.get(item['product_id']) # Access products_db
+         detailed_seller_items.append({
+             "product_id": item['product_id'],
+             "title": product['title'] if product else 'Unknown Product',
+             "quantity": item['quantity'],
+             "price_at_purchase": item['price_at_purchase'],
+             "image_url": product['image_urls'][0] if product and product['image_urls'] else None
          })
-    return jsonify(users_list), 200
 
-@app.route('/admin/sellers', methods=['GET'])
+    # Get customer info (only necessary info like shipping address, not sensitive details like email)
+    customer = users_db.get(order['user_id']) # Access users_db
+    customer_info = {
+        "name": customer['profile'].get('name', 'Unknown Customer'),
+        "shipping_address": order['shipping_address'] # Use address stored with order
+        # Avoid sending customer email or other sensitive info unless necessary and authorized
+    }
+
+    # Format the relevant order details for the seller
+    seller_order_details = {
+        "order_id": order['id'],
+        "order_date": order['order_date'],
+        "customer_info": customer_info,
+        "overall_status": order['status'], # Overall status of the order
+        "payment_status": order['payment_status'],
+        "tracking_number": order.get('tracking_number'), # Seller can see tracking if added
+        "items_from_your_shop": detailed_seller_items, # Only show seller's items
+        "total_for_your_shop": total_for_seller # Sum of this seller's items in this order
+    }
+
+    return jsonify(seller_order_details), 200
+
+
+@app.route('/api/seller/orders/<order_id>/status', methods=['PUT'])
+@seller_required
+def update_seller_order_status(order_id):
+    user_id = get_jwt_identity() # This is the seller_id
+    order = orders_db.get(order_id) # Access orders_db
+
+    if not order:
+        return jsonify({"msg": "Order not found"}), 404
+
+    # Check if the order contains any items from this seller
+    contains_seller_products = any(products_db.get(item['product_id'], {}).get('seller_id') == user_id for item in order['items']) # Access products_db
+
+    if not contains_seller_products:
+        return jsonify({"msg": "You do not have permission to update this order"}), 403 # Forbidden
+
+    data = request.get_json()
+    new_status = data.get('status')
+    tracking_number = data.get('tracking_number') # Optional
+
+    # Validate allowed status transitions for seller
+    # For V1 spec, seller can mark as shipped. Assume only transition from 'processing' or 'paid' state.
+    allowed_target_status = 'shipped' # Only 'shipped' is allowed by seller in V1 spec
+    allowed_initial_statuses = ['pending_payment', 'processing', 'paid'] # States from which seller can ship
+
+    if new_status != allowed_target_status:
+         return jsonify({"msg": f"Invalid status update. Sellers can only mark orders as '{allowed_target_status}'."}), 400
+
+    if order['status'] not in allowed_initial_statuses:
+        # Cannot mark as shipped if not in a state where it can be shipped
+        return jsonify({"msg": f"Order status '{order['status']}' cannot be updated to '{allowed_target_status}'."}), 400
+
+    if new_status == 'shipped' and (tracking_number is None or not tracking_number.strip()):
+         return jsonify({"msg": "Tracking number is required when marking as 'shipped'."}), 400
+
+    # Prevent marking as shipped if it's already shipped or later
+    if order['status'] in ['shipped', 'delivered', 'cancelled', 'refunded']:
+         return jsonify({"msg": f"Order is already in status '{order['status']}'."}), 400
+
+
+    # --- Simulate Transaction Start ---
+    try:
+        # Update the overall order status
+        order['status'] = new_status # Update orders_db
+        order['tracking_number'] = tracking_number # Store tracking (Update orders_db)
+
+        # --- Simulate Transaction Commit ---
+
+        # Trigger Shipping Notification Email if status is 'shipped'
+        if new_status == 'shipped':
+            customer = users_db.get(order['user_id']) # Access users_db
+            if customer:
+                 # Build a list of the seller's items in this order for the email
+                 seller_items_in_order = [
+                      item for item in order['items']
+                      if products_db.get(item['product_id'], {}).get('seller_id') == user_id # Access products_db
+                 ]
+                 item_list_str = "\n".join([f"- {item['quantity']} x {products_db.get(item['product_id'],{}).get('title','Unknown Item')}" for item in seller_items_in_order]) # Access products_db
+                 seller_shop_name = users_db.get(user_id,{}).get('profile',{}).get('shop_name', 'a seller') # Access users_db
+
+                 send_email_notification(
+                     recipient_email=customer['email'],
+                     subject=f"Your Order #{order_id} Has Shipped From {seller_shop_name}!",
+                     body=f"Good news! Items from your order #{order_id} from {seller_shop_name} have shipped.\n\n"
+                          f"Items Shipped from this seller:\n{item_list_str}\n\n"
+                          f"Tracking Number: {tracking_number}\n\n"
+                          f"You can view your order details here: [Link to Order History]" # Placeholder link
+                 )
+
+        return jsonify({"msg": f"Order status updated to '{new_status}'", "order_id": order_id, "status": new_status, "tracking_number": tracking_number}), 200
+
+    except Exception as e:
+        # --- Simulate Transaction Rollback ---
+        # In a real app, rollback DB changes
+        print(f"Error updating order status: {e}. Simulating rollback.")
+        return jsonify({"msg": "Failed to update order status", "error": str(e)}), 500
+
+
+# Admin Order Management Endpoints (Engineer 3)
+# Note: Admin endpoints might be split among engineers based on the data they manage,
+# but order management is primarily Engineer 3's domain per the plan.
+
+@app.route('/api/admin/orders', methods=['GET'])
 @admin_required
-def admin_list_sellers():
-    sellers = SellerProfile.query.all()
-    sellers_list = []
-    for seller in sellers:
-        sellers_list.append({
-            "id": seller.id,
-            "user_id": seller.user_id,
-            "user_email": seller.user.email if seller.user else 'Unknown User',
-            "shop_name": seller.shop_name,
-            "shop_description": seller.shop_description,
-            "is_approved": seller.is_approved
-        })
-    return jsonify(sellers_list), 200
+def admin_get_all_orders():
+    # Return all orders, potentially with pagination/filtering (not implemented in basic sim)
+    all_orders = list(orders_db.values()) # Access orders_db
 
-@app.route('/admin/sellers/<int:seller_id>/approve', methods=['PUT'])
+    # Format for overview
+    formatted_orders = []
+    for order in all_orders:
+         customer_name = users_db.get(order['user_id'], {}).get('profile', {}).get('name', 'Unknown Customer') # Access users_db
+         formatted_orders.append({
+             "order_id": order['id'],
+             "customer_id": order['user_id'], # Admin can see customer ID
+             "customer_name": customer_name,
+             "order_date": order['order_date'],
+             "total_amount": order['total_amount'],
+             "status": order['status'],
+             "payment_status": order['payment_status'],
+             "item_count": sum(item['quantity'] for item in order['items']),
+             "has_tracking": order.get('tracking_number') is not None
+         })
+
+    # Sort by date, newest first
+    formatted_orders.sort(key=lambda x: x['order_date'], reverse=True)
+
+    return jsonify(formatted_orders), 200
+
+
+@app.route('/api/admin/orders/<order_id>', methods=['GET'])
 @admin_required
-def admin_approve_seller(seller_id):
-    seller = SellerProfile.query.get(seller_id)
-    if not seller:
-        return jsonify({"message": "Seller profile not found"}), 404
-    seller.is_approved = True
-    # Ensure user role is 'seller' if not already
-    if seller.user and seller.user.role != 'admin':
-         seller.user.role = 'seller'
-    db.session.commit()
-    return jsonify({"message": "Seller approved", "seller_id": seller.id}), 200
+def admin_get_order_details(order_id):
+    order = orders_db.get(order_id) # Access orders_db
 
-@app.route('/admin/products', methods=['GET'])
+    if not order:
+        return jsonify({"msg": "Order not found"}), 404
+
+    # Fetch details for all items in the order
+    detailed_items = []
+    for item in order['items']:
+         product = products_db.get(item['product_id']) # Access products_db
+         # Lookup seller details for each item's seller
+         item_seller = users_db.get(item.get('seller_id')) # Use seller_id from item first (Access users_db)
+         if not item_seller and product: # Fallback lookup via product if seller_id not stored on item (Access users_db)
+              item_seller = users_db.get(product.get('seller_id'))
+
+         detailed_items.append({
+             "product_id": item['product_id'],
+             "title": product['title'] if product else 'Unknown Product',
+             "quantity": item['quantity'],
+             "price_at_purchase": item['price_at_purchase'],
+             "seller_id": item_seller['id'] if item_seller else 'Unknown',
+             "seller_shop_name": item_seller['profile'].get('shop_name', 'Unknown Seller') if item_seller else 'Unknown Seller',
+             "image_url": product['image_urls'][0] if product and product['image_urls'] else None
+         })
+
+    # Get customer info
+    customer = users_db.get(order['user_id']) # Access users_db
+    customer_info = {
+        "id": order['user_id'],
+        "name": customer['profile'].get('name', 'Unknown Customer'),
+        "email": customer.get('email'), # Admin can see customer email
+        "shipping_address": order['shipping_address']
+    }
+
+    # Format the full order details for the admin
+    full_order_details = {
+        "order_id": order['id'],
+        "order_date": order['order_date'],
+        "customer_info": customer_info,
+        "total_amount": order['total_amount'],
+        "status": order['status'],
+        "payment_status": order['payment_status'],
+        "tracking_number": order.get('tracking_number'),
+        "items": detailed_items
+    }
+
+    return jsonify(full_order_details), 200
+
+@app.route('/api/admin/orders/<order_id>/status', methods=['PUT'])
 @admin_required
-def admin_list_products():
-    products = Product.query.all()
-    return jsonify([{
-        "id": p.id,
-        "name": p.name,
-        "price": p.price,
-        "stock": p.stock,
-        "is_approved": p.is_approved,
-        "seller_id": p.seller_id,
-        "seller_shop_name": p.seller.shop_name if p.seller else None
-    } for p in products]), 200
+def admin_update_order_status(order_id):
+    order = orders_db.get(order_id) # Access orders_db
 
-@app.route('/admin/products/<int:product_id>/approve', methods=['PUT'])
-@admin_required
-def admin_approve_product(product_id):
-    product = Product.query.get(product_id)
-    if not product:
-        return jsonify({"message": "Product not found"}), 404
-    product.is_approved = True
-    db.session.commit()
-    return jsonify({"message": "Product approved", "product_id": product.id}), 200
+    if not order:
+        return jsonify({"msg": "Order not found"}), 404
 
-@app.route('/admin/orders', methods=['GET'])
-@admin_required
-def admin_list_orders():
-    orders = Order.query.all()
-    orders_list = []
-    for order in orders:
-        orders_list.append({
-            "id": order.id,
-            "user_id": order.user_id,
-            "buyer_email": order.buyer.email if order.buyer else 'Unknown Buyer',
-            "total_amount": order.total_amount,
-            "status": order.status,
-            "created_at": order.created_at.isoformat()
-        })
-    return jsonify(orders_list), 200
+    data = request.get_json()
+    new_status = data.get('status')
+    tracking_number = data.get('tracking_number') # Admin can also update tracking
 
-@app.route('/admin/reports/sales', methods=['GET'])
-@admin_required
-def admin_sales_report():
-     # Basic sales report: total revenue from completed orders
-     completed_orders = Order.query.filter_by(status='completed').all()
-     total_revenue = sum(order.total_amount for order in completed_orders)
-     return jsonify({"total_completed_sales_revenue": total_revenue}), 200
+    # Validate allowed status transitions for admin (Admin can set pretty much any status)
+    allowed_statuses = ['pending_payment', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded']
+    if new_status not in allowed_statuses:
+         return jsonify({"msg": f"Invalid status '{new_status}'"}), 400
 
+    # --- Simulate Transaction Start ---
+    try:
+        # Store old status for comparison
+        old_status = order['status']
+
+        # Update the overall order status
+        order['status'] = new_status # Update orders_db
+        # Admin can explicitly set tracking number (including None)
+        if 'tracking_number' in data: # Check if key is present
+             order['tracking_number'] = tracking_number # Update orders_db
+
+        # Admin might also update payment_status directly
+        if 'payment_status' in data: # Check if key is present
+             # Validate payment status if needed
+             allowed_payment_statuses = ['pending', 'paid', 'failed', 'refunded']
+             if data['payment_status'] not in allowed_payment_statuses:
+                  return jsonify({"msg": f"Invalid payment status '{data['payment_status']}'"}), 400
+             order['payment_status'] = data['payment_status'] # Update orders_db
+
+
+        # --- Simulate Transaction Commit ---
+
+        # Trigger Notification Emails based on status changes (if needed for admin changes)
+        customer = users_db.get(order['user_id']) # Access users_db
+        if customer and new_status != old_status: # Only send if status actually changed
+             subject = f"Update on Your Order #{order_id}"
+             body = f"The status of your order #{order_id} has been updated to '{new_status}'.\n\n"
+             # Add status-specific details to the email body
+             if new_status == 'cancelled':
+                  body += "Your order has been cancelled."
+             elif new_status == 'refunded':
+                  body += "A refund has been processed for your order."
+             elif new_status == 'shipped':
+                  body += f"Your order has been shipped!\nTracking Number: {order.get('tracking_number', 'N/A')}"
+             elif new_status == 'delivered':
+                 body += "Your order has been marked as delivered."
+             else:
+                 body += f"Current Status: {new_status}" # Generic update
+
+             body += "\n\nYou can view your order details here: [Link to Order History]" # Placeholder link
+
+             send_email_notification(
+                 recipient_email=customer['email'],
+                 subject=subject,
+                 body=body
+             )
+        elif customer and 'payment_status' in data and data['payment_status'] != order.get('payment_status'): # Notify if payment status changed by admin AND status didn't trigger email
+             if new_status == old_status: # Only if status didn't change
+                  send_email_notification(
+                      recipient_email=customer['email'],
+                      subject=f"Payment Status Update for Order #{order_id}",
+                      body=f"The payment status for your order #{order_id} has been updated to '{order['payment_status']}'.\n\n"
+                           f"You can view your order details here: [Link to Order History]" # Placeholder link
+                  )
+
+
+        return jsonify({"msg": f"Order status updated to '{new_status}'", "order_id": order_id, "status": new_status, "tracking_number": order.get('tracking_number'), "payment_status": order['payment_status']}), 200
+
+    except Exception as e:
+        # --- Simulate Transaction Rollback ---
+        # In a real app, rollback DB changes
+        print(f"Error updating order status by admin: {e}. Simulating rollback.")
+        return jsonify({"msg": "Failed to update order status", "error": str(e)}), 500
+
+# --- Basic Simulated Login for Testing This File in Isolation ---
+# In a real project, Engineer 1 would provide the actual /api/login endpoint.
+# This is included here solely to make this single file runnable for testing Engineer 3's routes.
+# This endpoint would be part of Engineer 1's code.
+@app.route('/sim_login', methods=['POST'])
+def sim_login():
+    """Simulates login for testing purposes."""
+    data = request.get_json()
+    email = data.get('email')
+    # In a real app, you'd verify password hash
+    user = next((u for u in users_db.values() if u.get('email') == email), None)
+    if user:
+        # Use user ID as identity in the token
+        access_token = create_access_token(identity=user['id'])
+        return jsonify(access_token=access_token, user_id=user['id'], role=user['role'])
+    return jsonify({"msg": "Bad email or password"}), 401
+
+
+# --- Main application entry point (if this were the main file) ---
+# This block would be handled by Engineer 1 in the final integrated application.
 if __name__ == '__main__':
-    # In a real deployment, you wouldn't use debug=True
-    # and would configure host/port appropriately
-    # For this demonstration, we run on http://127.0.0.1:5000/
-    app.run(debug=True)
+    # Engineer 1 would configure the database and start the app.
+    # db.create_all() # Example if using SQLAlchemy
+    # Add dummy data if needed for initial testing
+    print("Running simulated Flask app for Engineer 3's features.")
+    print("\nNOTE: This is a simplified simulation using in-memory dictionaries.")
+    print("It does NOT use a real database, persistent storage, or proper security like password hashing.")
+    print("Authentication is simulated with JWT based on user ID lookup.")
+    print("Payment Gateway interaction and Webhooks are simulated using print statements.")
+    print("\nTo test endpoints:")
+    print("1. Run this script.")
+    print("2. Get a JWT token using the /sim_login endpoint (POST with {'email': 'user_email'}).")
+    print("   Example emails: customer1@example.com, seller1@example.com, admin1@example.com, seller2@example.com, customer2@example.com")
+    print("3. Include the token in the 'Authorization: Bearer <token>' header for authenticated endpoints.")
+    print("\nEngineer 3 Endpoints Implemented:")
+    print("  GET /api/cart")
+    print("  POST /api/cart")
+    print("  PUT /api/cart/<product_id>")
+    print("  DELETE /api/cart/<product_id>")
+    print("  POST /api/checkout/create-order")
+    print("  POST /api/checkout/initiate-payment")
+    print("  POST /api/checkout/payment-webhook (Simulated - Requires specific JSON payload e.g. {'type': 'payment_intent.succeeded', 'data': {'object': {'id': 'sim_pi_id', 'metadata': {'order_id': 'order_id'}} } })")
+    print("  GET /api/customer/orders")
+    print("  GET /api/customer/orders/<order_id>")
+    print("  GET /api/products/<product_id>/reviews")
+    print("  POST /api/products/<product_id>/reviews")
+    print("  GET /api/seller/orders")
+    print("  GET /api/seller/orders/<order_id>")
+    print("  PUT /api/seller/orders/<order_id>/status")
+    print("  GET /api/admin/orders")
+    print("  GET /api/admin/orders/<order_id>")
+    print("  PUT /api/admin/orders/<order_id>/status")
+
+    app.run(debug=True, port=5000)

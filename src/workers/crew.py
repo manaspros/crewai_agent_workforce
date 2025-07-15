@@ -20,37 +20,38 @@ class Workers():
     @agent
     def frontend_engineer_1(self) -> Agent:
         return Agent(
-            config=self.agents_config['frontend_engineer_1'], # type: ignore[index]
-            verbose=True
+            config=self.agents_config['frontend_engineer_1'], verbose=True
         )
 
-    # @agent
-    # def frontend_engineer_2(self) -> Agent:
-    #     return Agent(
-    #         config=self.agents_config['frontend_engineer_2'], # type: ignore[index]
-    #         verbose=True
-    #     )
+    @agent
+    def frontend_engineer_2(self) -> Agent:
+        return Agent(
+            config=self.agents_config['frontend_engineer_2'], verbose=True
+        )
+
+    @agent
+    def frontend_engineer_3(self) -> Agent:
+        return Agent(
+            config=self.agents_config['frontend_engineer_3'], verbose=True
+        )
 
     @agent
     def backend_engineer_1(self) -> Agent:
         return Agent(
-            config=self.agents_config['backend_engineer_1'], # type: ignore[index]
-            verbose=True
+            config=self.agents_config['backend_engineer_1'], verbose=True
         )
 
-    # @agent
-    # def backend_engineer_2(self) -> Agent:
-    #     return Agent(
-    #         config=self.agents_config['backend_engineer_2'], # type: ignore[index]
-    #         verbose=True
-    #     )
+    @agent
+    def backend_engineer_2(self) -> Agent:
+        return Agent(
+            config=self.agents_config['backend_engineer_2'], verbose=True
+        )
 
-    # @agent
-    # def backend_engineer_3(self) -> Agent:
-    #     return Agent(
-    #         config=self.agents_config['backend_engineer_3'], # type: ignore[index]
-    #         verbose=True
-    #     )
+    @agent
+    def backend_engineer_3(self) -> Agent:
+        return Agent(
+            config=self.agents_config['backend_engineer_3'], verbose=True
+        )
 
     @agent
     def test_maker(self) -> Agent:
@@ -76,20 +77,52 @@ class Workers():
         )
 
     @task
-    def frontend_development_task(self) -> Task:
+    def frontend_planning_task(self) -> Task:
         return Task(
-            description=self.tasks_config['frontend_development_task']['description'],
-            expected_output=self.tasks_config['frontend_development_task']['expected_output'],
-            agent=self.frontend_engineer_1(),
+            description=self.tasks_config['frontend_planning_task']['description'],
+            expected_output=self.tasks_config['frontend_planning_task']['expected_output'],
+            agent=self.frontend_engineer_1()
+        )
+
+    @task
+    def frontend_implementation_task_2(self) -> Task:
+        return Task(
+            description=self.tasks_config['frontend_implementation_task_2']['description'],
+            expected_output=self.tasks_config['frontend_implementation_task_2']['expected_output'],
+            agent=self.frontend_engineer_2()
+        )
+
+    @task
+    def frontend_implementation_task_3(self) -> Task:
+        return Task(
+            description=self.tasks_config['frontend_implementation_task_3']['description'],
+            expected_output=self.tasks_config['frontend_implementation_task_3']['expected_output'],
+            agent=self.frontend_engineer_3(),
             output_file='code/frontend_code.html'
         )
 
     @task
-    def backend_development_task(self) -> Task:
+    def backend_planning_task(self) -> Task:
         return Task(
-            description=self.tasks_config['backend_development_task']['description'],
-            expected_output=self.tasks_config['backend_development_task']['expected_output'],
-            agent=self.backend_engineer_1(),
+            description=self.tasks_config['backend_planning_task']['description'],
+            expected_output=self.tasks_config['backend_planning_task']['expected_output'],
+            agent=self.backend_engineer_1()
+        )
+
+    @task
+    def backend_implementation_task_2(self) -> Task:
+        return Task(
+            description=self.tasks_config['backend_implementation_task_2']['description'],
+            expected_output=self.tasks_config['backend_implementation_task_2']['expected_output'],
+            agent=self.backend_engineer_2()
+        )
+
+    @task
+    def backend_implementation_task_3(self) -> Task:
+        return Task(
+            description=self.tasks_config['backend_implementation_task_3']['description'],
+            expected_output=self.tasks_config['backend_implementation_task_3']['expected_output'],
+            agent=self.backend_engineer_3(),
             output_file='code/backend_code.py'
         )
 
@@ -118,8 +151,12 @@ class Workers():
             agents=self.agents,
             tasks=[
                 self.product_definition_task(),
-                self.frontend_development_task(),
-                self.backend_development_task(),
+                self.frontend_planning_task(),
+                self.frontend_implementation_task_2(),
+                self.frontend_implementation_task_3(),
+                self.backend_planning_task(),
+                self.backend_implementation_task_2(),
+                self.backend_implementation_task_3(),
                 self.testing_task(),
                 self.security_review_task()
             ],
